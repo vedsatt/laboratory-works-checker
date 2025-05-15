@@ -1,0 +1,1 @@
+g++ ./lab-checker/include/tcp-server/server.cpp -o server -I"D:/boost_1_88_0" -L"D:/boost_1_88_0/stage/lib" -lboost_system-mgw14-mt-x64-1_88 -lws2_32

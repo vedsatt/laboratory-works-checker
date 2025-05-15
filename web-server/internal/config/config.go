@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	defaultPort string = "80"
-	defaultURL  string = "backend.labchecker"
+	defPort string = "80"
+	defURL  string = "backend.labchecker"
 )
 
 type Config struct {
@@ -17,18 +17,18 @@ type Config struct {
 
 func GetConfig() *Config {
 	c := &Config{
-		Port: defaultPort,
-		URL:  defaultURL,
+		Port: defPort,
+		URL:  defURL,
 	}
 
-	if port, ok := os.LookupEnv("PORT"); !ok && port != "" {
-		log.Printf("Port is unset. Using default value: %v", defaultPort)
+	if port, ok := os.LookupEnv("PORT"); !ok {
+		log.Printf("Port is unset. Using default value: %v", defPort)
 	} else {
 		c.Port = port
 	}
 
-	if url, ok := os.LookupEnv("SERVER_URL"); !ok && url != "" {
-		log.Printf("Server url is unset. Using default value: %v", defaultURL)
+	if url, ok := os.LookupEnv("SERVER_URL"); !ok {
+		log.Printf("Server url is unset. Using default value: %v", defURL)
 	} else {
 		c.URL = url
 	}

@@ -1,22 +1,30 @@
 package server
 
-import "web_server/internal/config"
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
 
 type Server struct {
 	port string
-	url  string
 }
 
-func New() *Server {
-	cfg := config.GetConfig()
-
+func New(port string) *Server {
 	s := &Server{
-		port: cfg.Port,
-		url:  cfg.URL,
+		port: fmt.Sprintf(":%s", port),
 	}
+
 	return s
 }
 
 func (s *Server) Start() {
+	submit := http.HandlerFunc(SubmitLabHandler)
 
+	mux := http.NewServeMux()
+
+	mux.Handle("/api/v1/submit", logsMiddleware(submit))
+
+	log.Printf("Starting server on port: %v", s.port)
+	http.ListenAndServe(s.port, mux)
 }
