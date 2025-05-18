@@ -15,7 +15,7 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body *models.Request
+	var body *models.LabRequest
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
