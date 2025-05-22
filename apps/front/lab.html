@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="index.html" class="back-button">← На главную</a>
+    <div class="container">
+        <header>
+            <h1 id="lab-title">Лабораторная работа №<span id="lab-number"></span></h1>
+        </header>
+        
+        <div class="content-wrapper">
+            <div class="description-section">
+                <div id="lab-description"></div>
+            </div>
+            
+            <div class="solution-section">
+                <div class="input-group">
+                    <label for="variant">Вариант:</label>
+                    <input type="text" id="variant" placeholder="Введите ваш вариант">
+                </div>
+                
+                <div class="tasks" id="tasks-container">
+                    <!-- Задания будут подгружаться динамически -->
+                </div>
+                
+                <div class="code-editor">
+                    <label for="code">Ваше решение:</label>
+                    <textarea id="code" rows="15" placeholder="Введите ваш код здесь..."></textarea>
+                    <button id="submit-btn">Отправить на проверку</button>
+                </div>
+                
+                <div class="solution-history">
+                    <h3>История решений</h3>
+                    <div id="history-list">
+                        <!-- История будет добавляться динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
