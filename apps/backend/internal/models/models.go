@@ -2,16 +2,16 @@ package models
 
 type (
 	LabRequest struct {
-		ID    int    `json:"id"`
-		Code  string `json:"code"`
-		Task1 int    `json:"task1"`
-		Task2 int    `json:"task2"`
-		Task3 int    `json:"task3"`
+		ID     int            `json:"id"`
+		LabNum int            `json:"lab_number"`
+		Code   string         `json:"code"`
+		Tasks  map[string]int `json:"tasks"`
 	}
 
 	CheckerResponse struct {
-		ID     int    `json:"id"`
-		Status string `json:"status"`
-		Msg    string `json:"msg"`
+		LabID       int    `json:"lab_id"`
+		ResStatus   string `json:"res_status"`
+		ResMsg      string `json:"res_msg"`
+		SystemError string `json:"system_error"`
 	}
 )

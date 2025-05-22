@@ -1,0 +1,24 @@
+{
+    "test-cases": [
+        {
+            "input":"3 4\n1 5 -3 8\n-4 2 6 0\n7 -2 9 1\n4\n5 8 0 9",
+            "output":"1 5 -3 0\n-4 2 6 0\n7 -2 0 1",
+            "description": "Обычный случай"
+        },
+        {
+            "input":"2 3\n2 -5 3\n1 4 -6\n5\n4\n2 5 3 4 6",
+            "output":"2 -5 3\n1 4 -6",
+            "description": "Все элементы в X"
+        },
+        {
+            "input":"2 2\n5 -5\n5 5\n2\n5",
+            "output":"0 -5\n0 5",
+            "description": "Матрица с одинаковыми максимумами"
+        },
+        {
+            "input":"qwerty",
+            "output":"int required",
+            "description": "Неверный ввод"
+        }
+    ]
+}

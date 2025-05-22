@@ -1,0 +1,24 @@
+{
+    "test-cases": [
+        {
+            "input":"3 4\n1 0 3 4\n5 6 0 8\n9 10 11 0",
+            "output":"1 3 4\n5 0 8\n9 11 0",
+            "description": "Обычный случай"
+        },
+        {
+            "input":"2 3\n0 1 0\n2 0 3",
+            "output":"0 1 0\n2 0 3",
+            "description": "Все столбцы с нулями"
+        },
+        {
+            "input":"2 2\n1 2\n3 4",
+            "output":"empty matrix",
+            "description": "Все столбцы без нулей"
+        },
+        {
+            "input":"qwerty\n2 3\n0 1 0\n2 0 3",
+            "output":"only int required\n0 1 0\n2 0 3",
+            "description": "Неверный ввод"
+        }
+    ]
+}

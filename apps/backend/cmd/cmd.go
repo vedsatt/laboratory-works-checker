@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/vedsatt/laboratory-works-checker/internal/config"
-	server "github.com/vedsatt/laboratory-works-checker/internal/http-server"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/config"
+	server "github.com/vedsatt/laboratory-works-checker/apps/backend/internal/http-server"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
 
 var (
 	defPort string = "80"
-	defURL  string = "backend.labchecker"
+	defURL  string = "localhost"
 )
 
 type Config struct {

@@ -2,10 +2,12 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/vedsatt/laboratory-works-checker/internal/models"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/checker"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/models"
 )
 
 func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,5 +26,14 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Printf("code:\n%v\ntask1: %v\ntask2: %v\ntask3: %v\n", body.Code, body.Task1, body.Task2, body.Task3)
+	fmt.Printf("id: %v\nlab num: %v\ncode:\n%v\ntasks: %v\n", body.ID, body.LabNum, body.Code, body.Tasks)
+
+	checker, err := checker.New(body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+	}
+	err = checker.Check()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+	}
 }

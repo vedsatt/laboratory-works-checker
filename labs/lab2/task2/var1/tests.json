@@ -1,0 +1,29 @@
+{
+    "test-cases": [
+        {
+            "input": "5\n123 45 6 7890 10",
+            "output": "6 9 6 24 1",
+            "description": "Стандартные положительные числа"
+        },
+        {
+            "input": "3\n0 100 999",
+            "output": "0 1 27",
+            "description": "Крайние случаи с нулями"
+        },
+        {
+            "input": "4\n-12 34 -56 78",
+            "output": "3 7 11 15",
+            "description": "Отрицательные числа"
+        },
+        {
+            "input": "2\n123456789 987654321",
+            "output": "45 45",
+            "description": "Большие числа"
+        },
+        {
+            "input": "qwerty",
+            "output": "only int required",
+            "description": "Неверный ввод"
+        }
+    ]
+}
