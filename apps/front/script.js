@@ -29,8 +29,9 @@ async function loadLabDescription(labNumber) {
         if (!response.ok) throw new Error('Описание не найдено');
         
         const mdContent = await response.text();
-        const htmlContent = md.render(mdContent); // Используем markdown-it вместо marked
-        
+        const contentBeforeAssignment = mdContent.split('## Задание')[0]; 
+        const htmlContent = md.render(contentBeforeAssignment); // Рендерим только нужную часть
+
         document.getElementById('lab-description').innerHTML = htmlContent;
     } catch (error) {
         document.getElementById('lab-description').innerHTML = `
