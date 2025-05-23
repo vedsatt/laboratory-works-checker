@@ -238,44 +238,60 @@ h2 {
     word-break: break-all;
 }
 
-/* Дополнительные элементы */
-ol, ul {
-    padding-left: 1.5rem;
-    line-height: 1.6;
+/* Markdown стили */
+.description-section h1, 
+.description-section h2, 
+.description-section h3 {
+    color: #f0f0f0;
+    margin: 1.5rem 0 1rem;
 }
 
-li {
+.description-section p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.description-section ul, 
+.description-section ol {
+    padding-left: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.description-section li {
     margin-bottom: 0.5rem;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1rem 0;
+.description-section code {
+    background-color: #333;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
 }
 
-th, td {
-    border: 1px solid #404040;
-    padding: 0.5rem;
-    text-align: left;
-}
-
-th {
+.description-section pre {
     background-color: #252525;
-    color: #f0f0f0;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
 }
 
-tr:nth-child(even) {
-    background-color: rgba(255, 255, 255, 0.05);
+.description-section blockquote {
+    border-left: 4px solid #3498db;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #a0a0a0;
 }
 
-a {
+.description-section a {
     color: #3498db;
     text-decoration: none;
-    transition: all 0.3s ease;
 }
 
-a:hover {
-    color: #2980b9;
+.description-section a:hover {
     text-decoration: underline;
+}
+
+.loading {
+    color: #a0a0a0;
+    font-style: italic;
 }
