@@ -295,3 +295,23 @@ h2 {
     color: #a0a0a0;
     font-style: italic;
 }
+
+.success-message {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #28a745;
+    font-weight: bold;
+}
+
+.error-message {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #dc3545;
+    font-weight: bold;
+}
