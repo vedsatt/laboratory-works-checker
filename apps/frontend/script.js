@@ -83,22 +83,19 @@ async function loadTasks(labNumber) {
             tasksContainer.innerHTML = '<p>Задания не найдены</p>';
             return;
         }
-        
-        // Обрабатываем каждую часть
+
         parts.forEach((part, partIndex) => {
             console.log(`14. Обработка части ${partIndex + 1}`);
             
-            // Разделяем часть на пункты
-            const items = part.split(/\n\d+\./).slice(1);
+            const items = part.split(/\n\d+\./).slice(1); // разделяем часть на пункты
             console.log(`15. В части ${partIndex + 1} найдено пунктов:`, items.length);
             
             if (items.length === 0) {
                 console.log(`16. Часть ${partIndex + 1} не содержит пунктов`);
                 return;
             }
-            
-            // Вычисляем индекс выбранного пункта
-            const selectedIndex = variant % items.length;
+
+            const selectedIndex = variant % items.length; // вычисляем индекс выбранного пункта
             console.log(`17. Для варианта ${variant} выбран индекс:`, selectedIndex);
             
             const selectedItem = items[selectedIndex].trim();
@@ -119,7 +116,7 @@ async function loadTasks(labNumber) {
                 taskContent.textContent = `1.${selectedItem}`;
             } else {
                 const md = window.markdownit();
-                taskContent.innerHTML = md.render(`1.${selectedItem}`);
+                taskContent.innerHTML = md.render(`${selectedItem}`);
                 console.log('21. Markdown успешно отрендерен');
             }
             

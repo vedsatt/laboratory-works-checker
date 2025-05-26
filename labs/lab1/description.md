@@ -45,26 +45,13 @@
 ### Часть 1
 Вычислить массив *R*[1:*n*] в соответствии с формулами:
 
-1. `r[i] = 2.5 sin(ax + i²h)`  
-   Формула: $$ r[i] = 2.5 \sin(ax + i^2h),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
-
-2. `r[i] = 1.25 sin(3ax - ih)`  
-   Формула: $$ r[i] = 1.25 \sin(3ax - ih),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
-
-3. `r[i] = 6 cos(ax + ih)`  
-   Формула: $$ r[i] = 6 \cos(ax + ih),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
-
-4. `r[i] = 0.3 cos(2ax - i²h)`  
-   Формула: $$ r[i] = 0.3 \cos(2ax - i^2h),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
-
-5. `r[i] = cos(ih) - cos(ax + ih)`  
-   Формула: $$ r[i] = \cos(ih) - \cos(ax + ih),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
-
-6. `r[i] = 5.5 sin(ih) + cos(ax + ih)`  
-   Формула: $$ r[i] = 5.5 \sin(ih) + \cos(ax + ih),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
-
-7. `r[i] = 0.8 cos(8ax - ih)`  
-   Формула: $$ r[i] = 0.8 \cos(8ax - ih),\quad i = \overline{1, n}\text{ и }x, h, a - \text{заданы} $$
+1. ` r[i] = 2.5 sin(ax + i²h)`  
+2. ` r[i] = 1.25 sin(3ax - ih)`  
+3. ` r[i] = 6 cos(ax + ih)`  
+4. ` r[i] = 0.3 cos(2ax - i²h)` 
+5. ` r[i] = cos(ih) - cos(ax + ih)`  
+6. ` r[i] = 5.5 sin(ih) + cos(ax + ih)` 
+7. ` r[i] = 0.8 cos(8ax - ih)`  
 
 ### Часть 2
 Из вычисленного массива R удалить:
