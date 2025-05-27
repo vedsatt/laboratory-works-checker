@@ -25,11 +25,6 @@ type Checker struct {
 	result      *models.CheckerResponse
 }
 
-type outputs struct {
-	expected string
-	got      string
-}
-
 func New(lab *models.LabRequest) (*Checker, error) {
 	checker := &Checker{
 		lab:    lab,
