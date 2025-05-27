@@ -1,5 +1,5 @@
 package checker
 
-func (c *Checker) splitedCheck(codeFilePath string) error {
+func (c *Checker) splitedTests() error {
 	return nil
 }

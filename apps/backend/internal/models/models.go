@@ -9,9 +9,7 @@ type (
 	}
 
 	CheckerResponse struct {
-		LabID       int    `json:"lab_id"`
-		ResStatus   string `json:"res_status"`
-		ResMsg      string `json:"res_msg"`
-		SystemError string `json:"system_error"`
+		ID     int    `json:"id"`
+		ResMsg string `json:"res_msg"`
 	}
 )

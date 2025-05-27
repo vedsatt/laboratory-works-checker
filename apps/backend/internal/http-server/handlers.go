@@ -11,6 +11,7 @@ import (
 )
 
 func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "invalid request method, use the POST method", http.StatusMethodNotAllowed)
 		log.Println("invalid request method")
@@ -26,14 +27,19 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("id: %v\nlab num: %v\ncode:\n%v\ntasks: %v\n", body.ID, body.LabNum, body.Code, body.Tasks)
+	resp := &models.CheckerResponse{}
+	resp.ID = body.ID
 
 	checker, err := checker.New(body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 	}
-	err = checker.Check()
+	msg, err := checker.Check()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 	}
+	resp.ResMsg = msg
+
+	w.Header().Set("Content-type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
