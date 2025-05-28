@@ -23,7 +23,7 @@ func (s *Server) Start() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/api/v1/submit", logsMiddleware(submit))
+	mux.Handle("/api/v1/submit", logsMiddleware(enableCORS(submit)))
 
 	log.Printf("Starting server on port: %v", s.port)
 	http.ListenAndServe(s.port, mux)

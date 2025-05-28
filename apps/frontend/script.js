@@ -151,7 +151,7 @@ document.getElementById('variant').addEventListener('input', function() {
 // Конфигурация сервера по умолчанию
 const SERVER_CONFIG = {
     host: process.env.SERVER_HOST || '127.0.0.1',
-    port: process.env.SERVER_PORT || '8000',
+    port: process.env.SERVER_PORT || '80',
     apiPath: '/api/v1/submit'
 };
 
@@ -173,10 +173,10 @@ async function submitSolution(labNumber) {
     try {
         // Формируем данные для отправки
         const requestData = {
-            id: 1, // временное значение, можно генерировать уникальное
+            id: 1, // сгенерировать уникальный айди
             lab_number: parseInt(labNumber),
-            code: code,
-            tasks: {} // можно добавить задачи, если нужно
+            code: code, // код-строка под json
+            tasks: {} // мапа: ключ task№, значение - вариация таски
         };
         
         // Отправляем запрос на сервер
@@ -208,7 +208,7 @@ async function submitSolution(labNumber) {
 }
 
 async function sendToServer(data) {
-    const url = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}${SERVER_CONFIG.apiPath}`;
+    const url = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}$/api/v1/submit`;
     
     const response = await fetch(url, {
         method: 'POST',
