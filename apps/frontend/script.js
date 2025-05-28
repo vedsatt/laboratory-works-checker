@@ -148,8 +148,15 @@ document.getElementById('variant').addEventListener('input', function() {
     }
 });
 
-function submitSolution() {
-    const labNumber = document.getElementById('lab-number').textContent;
+// Конфигурация сервера по умолчанию
+const SERVER_CONFIG = {
+    host: process.env.SERVER_HOST || '127.0.0.1',
+    port: process.env.SERVER_PORT || '8000',
+    apiPath: '/api/v1/submit'
+};
+
+async function submitSolution(labNumber) {
+    //const labNumber = document.getElementById('labNumber').textContent;
     const variant = document.getElementById('variant').value.trim();
     const code = document.getElementById('code').value.trim();
     
@@ -163,26 +170,62 @@ function submitSolution() {
         return;
     }
     
-    // Здесь должна быть реальная проверка решения, пока оставляем заглушку
-    const isSuccess = Math.random() > 0.3;
-    
-    addToHistory(labNumber, isSuccess, code);
-    
-    // Показываем результат пользователю
-    const resultMessage = isSuccess 
-        ? '<div class="success-message">✓ Решение верное!</div>'
-        : '<div class="error-message">✗ Ошибка в решении</div>';
-    
-    const historyList = document.getElementById('history-list');
-    historyList.insertAdjacentHTML('afterbegin', resultMessage);
-    
-    // Очищаем поле кода, если решение верное
-    if (isSuccess) {
-        document.getElementById('code').value = '';
+    try {
+        // Формируем данные для отправки
+        const requestData = {
+            id: 1, // временное значение, можно генерировать уникальное
+            lab_number: parseInt(labNumber),
+            code: code,
+            tasks: {} // можно добавить задачи, если нужно
+        };
+        
+        // Отправляем запрос на сервер
+        const response = await sendToServer(requestData);
+        
+        // Обрабатываем ответ
+        const isSuccess = response.ResMsg === 'OK';
+        const errorMessage = isSuccess ? '' : response.ResMsg;
+        
+        addToHistory(labNumber, isSuccess, code, errorMessage);
+        
+        // Показываем результат пользователю
+        const resultMessage = isSuccess 
+            ? '<div class="success-message">✓ Решение верное!</div>'
+            : `<div class="error-message">✗ Ошибка в решении: ${errorMessage}</div>
+               <div class="error-note">Строки, начинающиеся с #>, а также описание уведомлений и ошибок не учитываются при проверке ответа</div>`;
+        
+        const historyList = document.getElementById('history-list');
+        historyList.insertAdjacentHTML('afterbegin', resultMessage);
+        
+        // Очищаем поле кода, если решение верное
+        if (isSuccess) {
+            document.getElementById('code').value = '';
+        }
+    } catch (error) {
+        console.error('Ошибка при отправке решения:', error);
+        alert('Произошла ошибка при проверке решения. Пожалуйста, попробуйте позже.');
     }
 }
 
-function addToHistory(labNumber, isSuccess, code) {
+async function sendToServer(data) {
+    const url = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}${SERVER_CONFIG.apiPath}`;
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
+function addToHistory(labNumber, isSuccess, code, errorMessage = '') {
     const historyItem = document.createElement('div');
     historyItem.className = `history-item ${isSuccess ? 'success' : 'error'}`;
     
@@ -191,28 +234,30 @@ function addToHistory(labNumber, isSuccess, code) {
     
     historyItem.innerHTML = `
         <div class="status">${isSuccess ? '✓ Решение верное' : '✗ Ошибка в решении'}</div>
+        ${errorMessage ? `<div class="error-details">${errorMessage}</div>` : ''}
         <div class="timestamp">${timestamp}</div>
         <pre class="code-snippet">${code.substring(0, 100)}${code.length > 100 ? '...' : ''}</pre>
     `;
     
     document.getElementById('history-list').prepend(historyItem);
-    saveToLocalStorage(labNumber, isSuccess, code, timestamp);
+    saveToLocalStorage(labNumber, isSuccess, code, timestamp, errorMessage);
 }
 
-function saveToLocalStorage(labNumber, isSuccess, code, timestamp) {
+function saveToLocalStorage(labNumber, isSuccess, code, timestamp, errorMessage = '') {
     const history = JSON.parse(localStorage.getItem(`lab_${labNumber}_history`) || '[]');
     
     const newHistory = [{
         success: isSuccess,
         code: code,
-        timestamp: timestamp
+        timestamp: timestamp,
+        errorMessage: errorMessage
     }, ...history.slice(0, 9)]; 
 
     localStorage.setItem(`lab_${labNumber}_history`, JSON.stringify(newHistory));
 }
 
 function loadSolutionHistory(labNumber) {
-    const history = JSON.parse(localStorage.getItem(`lab_${labNumber}_history`) || []);
+    const history = JSON.parse(localStorage.getItem(`lab_${labNumber}_history`) || '[]');
     const historyList = document.getElementById('history-list');
     
     historyList.innerHTML = '';
@@ -228,6 +273,7 @@ function loadSolutionHistory(labNumber) {
         
         historyItem.innerHTML = `
             <div class="status">${item.success ? '✓ Решение верное' : '✗ Ошибка в решении'}</div>
+            ${item.errorMessage ? `<div class="error-details">${item.errorMessage}</div>` : ''}
             <div class="timestamp">${item.timestamp}</div>
             <pre class="code-snippet">${item.code.substring(0, 100)}${item.code.length > 100 ? '...' : ''}</pre>
         `;
