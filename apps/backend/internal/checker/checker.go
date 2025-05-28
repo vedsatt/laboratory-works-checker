@@ -3,7 +3,9 @@ package checker
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"strconv"
 
 	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/models"
@@ -17,12 +19,9 @@ type labConfig struct {
 }
 
 type Checker struct {
-	tempDirPath string
-	labType     string
+	labCongif   *labConfig
 	lab         *models.LabRequest
-	Language    string
-	tasksCount  int
-	TestCases   []string
+	tempDirPath string
 	result      *models.CheckerResponse
 }
 
@@ -41,9 +40,7 @@ func New(lab *models.LabRequest) (*Checker, error) {
 		return nil, fmt.Errorf("config is nil")
 	}
 
-	checker.labType = labCfg.LabType
-	checker.tasksCount = labCfg.TasksCount
-	checker.Language = labCfg.Language
+	checker.labCongif = labCfg
 
 	return checker, nil
 }
@@ -65,43 +62,76 @@ func (c *Checker) config() (*labConfig, error) {
 	return config, nil
 }
 
-func (c *Checker) Check() error {
-	dirPath := fmt.Sprintf("tmp-%v", c.lab.ID)
-	err := os.Mkdir(dirPath, 0770)
-	if err != nil {
-		return err
-	}
-
-	//defer os.RemoveAll(dirPath)
-	c.tempDirPath = dirPath
-
-	codeFilePath := fmt.Sprintf("./%v/code.%v", c.tempDirPath, c.Language)
+func (c *Checker) createAndCompile() (string, error) {
+	codeFilePath := fmt.Sprintf("./%v/code.%v", c.tempDirPath, c.labCongif.Language)
 	codeFile, err := os.Create(codeFilePath)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	code, err := strconv.Unquote(`"` + c.lab.Code + `"`)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	_, err = codeFile.WriteString(code)
 	if err != nil {
-		return nil
+		return "", nil
 	}
 
 	codeFile.Close()
 
-	switch c.labType {
+	var cmd *exec.Cmd
+
+	switch c.labCongif.Language {
+	case "c":
+		cmd = exec.Command("gcc", codeFilePath, "-o", fmt.Sprintf("./%v/code", c.tempDirPath))
+	case "cpp", "cxx", "cc":
+		cmd = exec.Command("g++", codeFilePath, "-o", fmt.Sprintf("./%v/code", c.tempDirPath))
+	default:
+		err := fmt.Errorf("unsupported file extension: %s", c.labCongif.Language)
+		log.Println(err)
+		return "", err
+	}
+
+	// запуск компиляции
+	if err := cmd.Run(); err != nil {
+		log.Println(fmt.Errorf("compilation failed: %w", err))
+		return err.Error(), nil
+	}
+	os.Remove(codeFilePath)
+
+	return "", nil
+}
+
+func (c *Checker) Check() (string, error) {
+	dirPath := fmt.Sprintf("tmp-%v", c.lab.ID)
+	err := os.Mkdir(dirPath, 0770)
+	if err != nil {
+		return "", err
+	}
+
+	defer os.RemoveAll(dirPath)
+
+	c.tempDirPath = dirPath
+
+	msg, err := c.createAndCompile()
+	if err != nil {
+		return "", err
+	}
+	if msg != "" {
+		return msg, nil
+	}
+
+	switch c.labCongif.LabType {
 	case "splited":
-		err = c.splitedCheck(codeFilePath)
+		err = c.splitedTests()
 	case "monolit":
-		err = c.monolitChecker(codeFilePath)
+		msg, err = c.monolitTests()
 	}
 
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return msg, nil
 }
