@@ -22,8 +22,8 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		http.Error(w, "error with decoding request body", http.StatusInternalServerError)
-		log.Printf("error with decoding request body: %v", err)
+		http.Error(w, "system error with decoding request body", http.StatusInternalServerError)
+		log.Printf("system error with decoding request body: %v", err)
 		return
 	}
 
@@ -33,10 +33,14 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 	checker, err := checker.New(body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		log.Printf("system error with creating checker obj: %v", err)
+		return
 	}
+	log.Printf("request with id: %v, labNum %v, tasks: %v", body.ID, body.LabNum, body.Tasks)
 	msg, err := checker.Check()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		log.Printf("system error with checker: %v", err)
 	}
 	resp.ResMsg = msg
 

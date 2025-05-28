@@ -33,11 +33,15 @@ func New(lab *models.LabRequest) (*Checker, error) {
 
 	labCfg, err := checker.config()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+		e := fmt.Errorf("failed to load config: %w", err)
+		log.Println(e)
+		return nil, e
 	}
 
 	if labCfg == nil {
-		return nil, fmt.Errorf("config is nil")
+		e := fmt.Errorf("config is nil")
+		log.Println(e)
+		return nil, e
 	}
 
 	checker.labCongif = labCfg
@@ -56,7 +60,9 @@ func (c *Checker) config() (*labConfig, error) {
 	var config *labConfig
 	err = json.NewDecoder(file).Decode(&config)
 	if err != nil {
-		return nil, err
+		e := fmt.Errorf("error with decoding lab config: %v", err)
+		log.Println(e)
+		return nil, e
 	}
 
 	return config, nil
@@ -66,17 +72,23 @@ func (c *Checker) createAndCompile() (string, error) {
 	codeFilePath := fmt.Sprintf("./%v/code.%v", c.tempDirPath, c.labCongif.Language)
 	codeFile, err := os.Create(codeFilePath)
 	if err != nil {
-		return "", err
+		e := fmt.Errorf("error with creating code file: %v", err)
+		log.Println(e)
+		return "", e
 	}
 
 	code, err := strconv.Unquote(`"` + c.lab.Code + `"`)
 	if err != nil {
-		return "", err
+		e := fmt.Errorf("error with unquoting code: %v", err)
+		log.Println(e)
+		return "", e
 	}
 
 	_, err = codeFile.WriteString(code)
 	if err != nil {
-		return "", nil
+		e := fmt.Errorf("error writing code to file: %v", err)
+		log.Println(e)
+		return "", e
 	}
 
 	codeFile.Close()
@@ -108,7 +120,9 @@ func (c *Checker) Check() (string, error) {
 	dirPath := fmt.Sprintf("tmp-%v", c.lab.ID)
 	err := os.Mkdir(dirPath, 0770)
 	if err != nil {
-		return "", err
+		e := fmt.Errorf("error with creating tmp directory: %v", err)
+		log.Println(e)
+		return "", e
 	}
 
 	defer os.RemoveAll(dirPath)
@@ -132,6 +146,10 @@ func (c *Checker) Check() (string, error) {
 
 	if err != nil {
 		return "", err
+	}
+
+	if msg == "OK" {
+		log.Printf("request with id %v: all tests passed successfully", c.lab.ID)
 	}
 	return msg, nil
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,16 +19,22 @@ func (c *Checker) createSolution(solution *os.File) error {
 			c.lab.LabNum, i, c.lab.Tasks[fmt.Sprintf("task%v", i)])
 		file, err := os.Open(path)
 		if err != nil {
-			return err
+			e := fmt.Errorf("error with opening part-solution file: %v", err)
+			log.Println(e)
+			return e
 		}
 		solutionPart, err := io.ReadAll(file)
 		if err != nil {
-			return err
+			e := fmt.Errorf("error with reading code from part-solution file: %v", err)
+			log.Println(e)
+			return e
 		}
 
 		_, err = solution.WriteString(string(solutionPart))
 		if err != nil {
-			return err
+			e := fmt.Errorf("error with creating solution file: %v", err)
+			log.Println(e)
+			return e
 		}
 	}
 
@@ -42,9 +49,12 @@ func (c *Checker) runRefSolution(absPath, input string) (string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("error with running ref solution: %v\nStderr: %s", err, stderr.String())
+		e := fmt.Errorf("error with running ref solution: %v\nStderr: %s", err, stderr.String())
+		log.Println(e)
+		return "", e
 	}
 	return stdout.String(), nil
 }
@@ -80,14 +90,18 @@ func (c *Checker) runTests() (string, error) {
 	inputPath := fmt.Sprintf("./%v/input.txt", c.tempDirPath)
 	inputFile, err := os.Create(inputPath)
 	if err != nil {
-		return "", err
+		e := fmt.Errorf("error with creating input file: %v", err)
+		log.Println(e)
+		return "", e
 	}
 	defer inputFile.Close()
 
 	outputPath := fmt.Sprintf("./%v/output.txt", c.tempDirPath)
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
-		return "", err
+		e := fmt.Errorf("error with creating output file: %v", err)
+		log.Println(e)
+		return "", e
 	}
 	defer outputFile.Close()
 
@@ -104,10 +118,11 @@ func (c *Checker) runTests() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		fmt.Printf("ref:\n%v", refOut)
 
 		if err := os.WriteFile(inputPath, []byte(testCase), 0644); err != nil {
-			return "", err
+			e := fmt.Errorf("error with wtriting test-case to the input file: %v", err)
+			log.Println(e)
+			return "", e
 		}
 
 		// Сбрасываем позицию в начало и очищаем файл
@@ -143,14 +158,16 @@ func (c *Checker) runTests() (string, error) {
 		}
 	}
 
-	return "OK", err
+	return "OK", nil
 }
 
 func (c *Checker) monolitTests() (string, error) {
 	refSolutionPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
 	refSolution, err := os.Create(refSolutionPath)
 	if err != nil {
-		return "", err
+		e := fmt.Errorf("error with creating solution file: %v", err)
+		log.Println(e)
+		return "", e
 	}
 
 	err = c.createSolution(refSolution)

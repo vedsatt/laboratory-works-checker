@@ -5,6 +5,8 @@ import (
 )
 
 func isReport(program, correct string) bool {
+	program = strings.TrimSpace(program)
+	correct = strings.TrimSpace(correct)
 	return (strings.HasPrefix(program, "Error:") && strings.HasPrefix(correct, "Error:")) ||
 		(strings.HasPrefix(program, "Notice:") && strings.HasPrefix(correct, "Notice:"))
 }
@@ -16,15 +18,25 @@ func (c *Checker) validate(programOutput, correctAns string) bool {
 	i, j := 0, 0
 	for i < len(progLines) {
 		currLine := strings.TrimSpace(progLines[i])
+		correctLine := strings.TrimSpace(correctOutLines[j])
 		if strings.HasPrefix(currLine, "#>") {
 			i++
 			continue
 		}
 
-		if currLine != correctOutLines[j] && !isReport(currLine, correctOutLines[j]) {
+		if currLine == "" || currLine == "\t" || currLine == " " {
+			i++
+			continue
+		}
+
+		if currLine != correctLine && !isReport(currLine, correctLine) {
 			return false
 		}
+		i++
 		j++
+		if j >= len(correctOutLines) {
+			return false
+		}
 	}
 
 	return true
