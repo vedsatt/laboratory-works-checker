@@ -13,7 +13,16 @@ import (
 	"time"
 )
 
-func (c *Checker) createSolution(solution *os.File) error {
+func (c *Checker) createSolution() error {
+	refSolutionPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
+	refSolution, err := os.Create(refSolutionPath)
+	if err != nil {
+		e := fmt.Errorf("error with creating solution file: %v", err)
+		log.Println(e)
+		return e
+	}
+	defer refSolution.Close()
+
 	for i := 1; i <= c.labCongif.TasksCount; i++ {
 		path := fmt.Sprintf("./labs/lab%v/task%v/var%v/solution.py",
 			c.lab.LabNum, i, c.lab.Tasks[fmt.Sprintf("task%v", i)])
@@ -30,7 +39,7 @@ func (c *Checker) createSolution(solution *os.File) error {
 			return e
 		}
 
-		_, err = solution.WriteString(string(solutionPart))
+		_, err = refSolution.WriteString(string(solutionPart))
 		if err != nil {
 			e := fmt.Errorf("error with creating solution file: %v", err)
 			log.Println(e)
@@ -114,46 +123,89 @@ func (c *Checker) runTests() (string, error) {
 
 	for i := range c.labCongif.TestCases {
 		testCase := c.labCongif.TestCases[i]
-		refOut, err := c.runRefSolution(absRefPath, testCase)
-		if err != nil {
+
+		refSolCh := make(chan struct {
+			out string
+			err error
+		})
+
+		go func() {
+			refOut, err := c.runRefSolution(absRefPath, testCase) // горутина 1
+			refSolCh <- struct {
+				out string
+				err error
+			}{refOut, err}
+		}()
+
+		codeCh := make(chan struct {
+			stdErr string
+			err    error
+			out    string
+		})
+
+		go func() {
+			// Записываем тест-кейсы по очереди в input файл
+			if err := os.WriteFile(inputPath, []byte(testCase), 0644); err != nil {
+				e := fmt.Errorf("error with wtriting test-case to the input file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
+
+			// Сбрасываем позицию input в начало и очищаем файл
+			inputFile.Seek(0, 0)
+			outputFile.Truncate(0) // очищаем output файл
+			outputFile.Seek(0, 0)
+
+			stdErr, err := c.runCode(absCodePath, inputFile, outputFile) // горутина 2
+			if err != nil {
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", err, ""}
+			}
+
+			if stdErr != "" {
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{stdErr, nil, ""}
+			}
+
+			// Сохраняем данные из буфера в файл и смещаем позицию чтения на 0,
+			// чтобы получить вывод программы ученика
+			outputFile.Sync()
+			outputFile.Seek(0, 0)
+
+			codeOut, _ := io.ReadAll(outputFile)
+			codeCh <- struct {
+				stdErr string
+				err    error
+				out    string
+			}{"", nil, string(codeOut)}
+		}()
+
+		refSol := <-refSolCh
+		if refSol.err != nil {
 			return "", err
 		}
 
-		if err := os.WriteFile(inputPath, []byte(testCase), 0644); err != nil {
-			e := fmt.Errorf("error with wtriting test-case to the input file: %v", err)
-			log.Println(e)
-			return "", e
+		code := <-codeCh
+		if code.err != nil {
+			return "", err
+		}
+		if code.stdErr != "" {
+			return code.stdErr, nil
 		}
 
-		// Сбрасываем позицию в начало и очищаем файл
-		if _, err := inputFile.Seek(0, 0); err != nil {
-			return "", err
-		}
-		if err := outputFile.Truncate(0); err != nil { // Очищаем файл
-			return "", err
-		}
-		if _, err := outputFile.Seek(0, 0); err != nil {
-			return "", err
-		}
-
-		stdErr, err := c.runCode(absCodePath, inputFile, outputFile)
-		if err != nil {
-			return "", err
-		}
-		if stdErr != "" {
-			return stdErr, nil
-		}
-
-		if err := outputFile.Sync(); err != nil {
-			return "", err
-		}
-		if _, err := outputFile.Seek(0, 0); err != nil {
-			return "", err
-		}
-		codeOut, _ := io.ReadAll(outputFile)
-
-		if isCorrect := c.validate(string(codeOut), refOut); !isCorrect {
-			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refOut, string(codeOut))
+		// Ждем выполнения эталонного решения и кода ученика
+		if isCorrect := c.validate(code.out, refSol.out); !isCorrect {
+			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refSol.out, code.out)
 			return message, nil
 		}
 	}
@@ -161,22 +213,31 @@ func (c *Checker) runTests() (string, error) {
 	return "OK", nil
 }
 
-func (c *Checker) monolitTests() (string, error) {
-	refSolutionPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
-	refSolution, err := os.Create(refSolutionPath)
-	if err != nil {
-		e := fmt.Errorf("error with creating solution file: %v", err)
-		log.Println(e)
-		return "", e
+func (c *Checker) monolitTests(compilerCh chan struct {
+	msg string
+	err error
+}) (string, error) {
+	errSolutionCh := make(chan error)
+	go func() {
+		/////////////
+		err := c.createSolution()
+		errSolutionCh <- err
+	}()
+
+	out := <-compilerCh
+	if out.err != nil {
+		return "", out.err
+	}
+	if out.msg != "" {
+		return out.msg, nil
 	}
 
-	err = c.createSolution(refSolution)
+	err := <-errSolutionCh
 	if err != nil {
 		return "", err
 	}
-	refSolution.Close()
-
 	msg, err := c.runTests()
+
 	if err != nil {
 		return "", err
 	}

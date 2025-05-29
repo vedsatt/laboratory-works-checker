@@ -129,27 +129,32 @@ func (c *Checker) Check() (string, error) {
 
 	c.tempDirPath = dirPath
 
-	msg, err := c.createAndCompile()
-	if err != nil {
-		return "", err
-	}
-	if msg != "" {
-		return msg, nil
-	}
+	compilerCh := make(chan struct {
+		msg string
+		err error
+	})
+	go func() {
+		msg, err := c.createAndCompile()
+		compilerCh <- struct {
+			msg string
+			err error
+		}{msg, err}
+	}()
 
+	var testsMsg string
 	switch c.labCongif.LabType {
 	case "splited":
-		err = c.splitedTests()
+		testsMsg, err = c.splitedTests(compilerCh)
 	case "monolit":
-		msg, err = c.monolitTests()
+		testsMsg, err = c.monolitTests(compilerCh)
 	}
 
 	if err != nil {
 		return "", err
 	}
 
-	if msg == "OK" {
+	if testsMsg == "OK" {
 		log.Printf("request with id %v: all tests passed successfully", c.lab.ID)
 	}
-	return msg, nil
+	return testsMsg, nil
 }
