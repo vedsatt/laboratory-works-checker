@@ -10,15 +10,20 @@ import (
 // Если программа завершилась с ошибкой и остались временные директории, которые могут
 // помешать работе программы - cleaner удалит все эти папки.
 func Clean() error {
-	dirPath := "../../../"
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	dirPath := "./"
 
-		// Проверяем, что имя начинается с "tmp-"
-		if info.IsDir() && filepath.Base(path) != filepath.Base(dirPath) {
-			if matched, _ := filepath.Match("tmp-*", info.Name()); matched {
+	// Читаем содержимое корневой директории
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return fmt.Errorf("error reading directory: %v", err)
+	}
+
+	// Проходим по всем элементам в корневой директории
+	for _, file := range files {
+		// Проверяем, что это директория и имя начинается с "tmp-"
+		if file.IsDir() {
+			if matched, _ := filepath.Match("tmp-*", file.Name()); matched {
+				path := filepath.Join(dirPath, file.Name())
 				fmt.Printf("deleting directory: %s\n", path)
 
 				// Удаляем папку и всё её содержимое
@@ -28,10 +33,6 @@ func Clean() error {
 				}
 			}
 		}
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	return nil

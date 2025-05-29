@@ -2,7 +2,6 @@ package checker
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -10,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // Создает готовое эталонное решение из кусков кода для каждого задания на питоне
@@ -28,7 +26,7 @@ func (c *Checker) createSolution() error {
 	defer refSolution.Close()
 
 	// Проходимся по нужным вариациям и заполняем итоговый файл
-	for i := 1; i <= c.labCongif.TasksCount; i++ {
+	for i := 1; i <= c.labConfig.TasksCount; i++ {
 		// Форматируем путь и открываем нужный кусок кода
 		path := fmt.Sprintf("./labs/lab%v/task%v/var%v/solution.py",
 			c.lab.LabNum, i, c.lab.Tasks[fmt.Sprintf("task%v", i)])
@@ -79,38 +77,6 @@ func (c *Checker) runRefSolution(absPath, input string) (string, error) {
 	return stdout.String(), nil
 }
 
-// Запускает код ученика с конкретным тест-кейсом
-func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) (string, error) {
-	// Создаем контекст с отменой, чтобы принудительно остановить программу в случая превышения допустимого времени выполнения
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Создаем команду и перенаправляем ввод и вывод
-	cmd := exec.CommandContext(ctx, absPath)
-	var stderr bytes.Buffer
-	cmd.Stdin = inputFile
-	cmd.Stdout = outputFile
-	cmd.Stderr = &stderr
-
-	// Запускаем код и в случае длительного выполнения принудительно останавливаем
-	err := cmd.Run()
-	defer func() {
-		if cmd.Process != nil {
-			cmd.Process.Kill()
-		}
-	}()
-
-	// В случае принудительной остановки кода возвращаем ответ о неверном решении
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "Превышено максимальное время выполнения.", nil
-		}
-		return stderr.String(), err
-	}
-
-	return "", nil
-}
-
 // Запускаем тесты для проверки кода ученика
 func (c *Checker) runTests() (string, error) {
 	// Создаем input и output файлы для дальнейшего заполнения вводом и выводом соответственно
@@ -141,8 +107,8 @@ func (c *Checker) runTests() (string, error) {
 	absRefPath, _ := filepath.Abs(refPath)
 
 	// Проходимся по тест-кейсам и запускаем программы
-	for i := range c.labCongif.TestCases {
-		testCase := c.labCongif.TestCases[i]
+	for i := range c.labConfig.TestCases {
+		testCase := c.labConfig.TestCases[i]
 
 		// При запуске программ используется многопоточность, позволяя одновременно
 		// прогнать тест через эталонное решение и через код ученика.

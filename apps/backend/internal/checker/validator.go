@@ -1,9 +1,46 @@
 package checker
 
 import (
+	"bytes"
+	"context"
+	"os"
+	"os/exec"
 	"slices"
 	"strings"
+	"time"
 )
+
+// Запускает код ученика с конкретным тест-кейсом
+func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) (string, error) {
+	// Создаем контекст с отменой, чтобы принудительно остановить программу в случая превышения допустимого времени выполнения
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Создаем команду и перенаправляем ввод и вывод
+	cmd := exec.CommandContext(ctx, absPath)
+	var stderr bytes.Buffer
+	cmd.Stdin = inputFile
+	cmd.Stdout = outputFile
+	cmd.Stderr = &stderr
+
+	// Запускаем код и в случае длительного выполнения принудительно останавливаем
+	err := cmd.Run()
+	defer func() {
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+	}()
+
+	// В случае принудительной остановки кода возвращаем ответ о неверном решении
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "Превышено максимальное время выполнения.", nil
+		}
+		return stderr.String(), err
+	}
+
+	return "", nil
+}
 
 // Проверяет, является ли вывод уведомлением об ошибке или граничном случае
 // Сделано для того, чтобы не загонять учеников с лишком узкие рамки, чтобы они могли

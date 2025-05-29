@@ -3,10 +3,11 @@ package models
 
 type (
 	LabRequest struct {
-		ID     int            `json:"id"`
-		LabNum int            `json:"lab_number"`
-		Code   string         `json:"code"`
-		Tasks  map[string]int `json:"tasks"`
+		ID       int            `json:"id"`
+		LabNum   int            `json:"lab_number"`
+		Code     string         `json:"code"`
+		Tasks    map[string]int `json:"tasks"`
+		CurrTask int            `json:"task"`
 	}
 
 	CheckerResponse struct {

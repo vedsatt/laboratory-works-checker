@@ -19,7 +19,7 @@ type labConfig struct {
 }
 
 type Checker struct {
-	labCongif   *labConfig
+	labConfig   *labConfig
 	lab         *models.LabRequest
 	tempDirPath string
 	result      *models.CheckerResponse
@@ -48,7 +48,7 @@ func New(lab *models.LabRequest) (*Checker, error) {
 	}
 
 	// Сохраняем конфиг в Checker
-	checker.labCongif = labCfg
+	checker.labConfig = labCfg
 
 	return checker, nil
 }
@@ -81,7 +81,7 @@ func (c *Checker) config() (*labConfig, error) {
 // и сразу компилирует его, удаляя после этого файл с кодом
 func (c *Checker) createAndCompile() (string, error) {
 	//Создаем пустой файл
-	codeFilePath := fmt.Sprintf("./%v/code.%v", c.tempDirPath, c.labCongif.Language)
+	codeFilePath := fmt.Sprintf("./%v/code.%v", c.tempDirPath, c.labConfig.Language)
 	codeFile, err := os.Create(codeFilePath)
 	if err != nil {
 		e := fmt.Errorf("error with creating code file: %v", err)
@@ -110,13 +110,13 @@ func (c *Checker) createAndCompile() (string, error) {
 	// Создаем и настраиваем команду компиляции
 	var cmd *exec.Cmd
 
-	switch c.labCongif.Language {
+	switch c.labConfig.Language {
 	case "c":
 		cmd = exec.Command("gcc", codeFilePath, "-o", fmt.Sprintf("./%v/code", c.tempDirPath))
 	case "cpp", "cxx", "cc":
 		cmd = exec.Command("g++", codeFilePath, "-o", fmt.Sprintf("./%v/code", c.tempDirPath))
 	default:
-		err := fmt.Errorf("unsupported file extension: %s", c.labCongif.Language)
+		err := fmt.Errorf("unsupported file extension: %s", c.labConfig.Language)
 		log.Println(err)
 		return "", err
 	}
@@ -169,7 +169,7 @@ func (c *Checker) Check() (string, error) {
 	// У лаб есть 2 типа - все части являются подпрограммами одного большого кода (monolit), и все части являются отдельной программой (splited).
 	// В зависимости от этого используются разные проверки, т. к. в случае монолитной лабы это упрощает написания тестов, а в случае разбитой лабы
 	// ускоряет работу программы, позволяя не создавать для каждого задания эталонное решение, а просто составить тест-кейсы
-	switch c.labCongif.LabType {
+	switch c.labConfig.LabType {
 	case "splited":
 		testsMsg, err = c.splitedTests(compilerCh)
 	case "monolit":
