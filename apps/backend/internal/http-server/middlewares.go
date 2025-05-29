@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Логирует все запросы на указанные хендлеры
 func logsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Method: %v, URL: %v", r.Method, r.URL)
@@ -16,6 +17,7 @@ func logsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// Разрашает запросы с другого домена
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

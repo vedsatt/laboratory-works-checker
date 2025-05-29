@@ -13,7 +13,11 @@ import (
 	"time"
 )
 
+// Создает готовое эталонное решение из кусков кода для каждого задания на питоне
+// Каждый кусок устроен так, что он может быть совместим с любым другим куском
+// Благодаря чему обеспечивается гибкость в создании решения
 func (c *Checker) createSolution() error {
+	// Создаем пустой файл для итогового решения
 	refSolutionPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
 	refSolution, err := os.Create(refSolutionPath)
 	if err != nil {
@@ -23,7 +27,9 @@ func (c *Checker) createSolution() error {
 	}
 	defer refSolution.Close()
 
+	// Проходимся по нужным вариациям и заполняем итоговый файл
 	for i := 1; i <= c.labCongif.TasksCount; i++ {
+		// Форматируем путь и открываем нужный кусок кода
 		path := fmt.Sprintf("./labs/lab%v/task%v/var%v/solution.py",
 			c.lab.LabNum, i, c.lab.Tasks[fmt.Sprintf("task%v", i)])
 		file, err := os.Open(path)
@@ -39,6 +45,7 @@ func (c *Checker) createSolution() error {
 			return e
 		}
 
+		// Записываем полученный кусок в итоговый файл
 		_, err = refSolution.WriteString(string(solutionPart))
 		if err != nil {
 			e := fmt.Errorf("error with creating solution file: %v", err)
@@ -50,7 +57,9 @@ func (c *Checker) createSolution() error {
 	return nil
 }
 
+// Запускает эталонное решение с конкретными входными данными (тест-кейсом)
 func (c *Checker) runRefSolution(absPath, input string) (string, error) {
+	// Создаем команду и перенаправляем ввод и вывод
 	cmd := exec.Command("python", absPath)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -58,7 +67,9 @@ func (c *Checker) runRefSolution(absPath, input string) (string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	// Принудительно изменяем кодировку для корректного отображения русского языка
 	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
+	// Запускаем решение и возвращаем вывод
 	err := cmd.Run()
 	if err != nil {
 		e := fmt.Errorf("error with running ref solution: %v\nStderr: %s", err, stderr.String())
@@ -68,16 +79,20 @@ func (c *Checker) runRefSolution(absPath, input string) (string, error) {
 	return stdout.String(), nil
 }
 
+// Запускает код ученика с конкретным тест-кейсом
 func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) (string, error) {
+	// Создаем контекст с отменой, чтобы принудительно остановить программу в случая превышения допустимого времени выполнения
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Создаем команду и перенаправляем ввод и вывод
 	cmd := exec.CommandContext(ctx, absPath)
 	var stderr bytes.Buffer
 	cmd.Stdin = inputFile
 	cmd.Stdout = outputFile
 	cmd.Stderr = &stderr
 
+	// Запускаем код и в случае длительного выполнения принудительно останавливаем
 	err := cmd.Run()
 	defer func() {
 		if cmd.Process != nil {
@@ -85,6 +100,7 @@ func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) (strin
 		}
 	}()
 
+	// В случае принудительной остановки кода возвращаем ответ о неверном решении
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return "Превышено максимальное время выполнения.", nil
@@ -95,7 +111,9 @@ func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) (strin
 	return "", nil
 }
 
+// Запускаем тесты для проверки кода ученика
 func (c *Checker) runTests() (string, error) {
+	// Создаем input и output файлы для дальнейшего заполнения вводом и выводом соответственно
 	inputPath := fmt.Sprintf("./%v/input.txt", c.tempDirPath)
 	inputFile, err := os.Create(inputPath)
 	if err != nil {
@@ -114,29 +132,39 @@ func (c *Checker) runTests() (string, error) {
 	}
 	defer outputFile.Close()
 
-	// Для питона весь ввод и вывод - строка из конфига лаб. работы,
+	// Чтобы лишний раз не использовать системный вызов для эталонного решения
+	// весь ввод и вывод - строка из конфига лаб. работы,
 	// т.к. это удобнее и ускоряет работу программы
 	execPath := fmt.Sprintf("./%v/code.exe", c.tempDirPath)
 	absCodePath, _ := filepath.Abs(execPath)
 	refPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
 	absRefPath, _ := filepath.Abs(refPath)
 
+	// Проходимся по тест-кейсам и запускаем программы
 	for i := range c.labCongif.TestCases {
 		testCase := c.labCongif.TestCases[i]
 
+		// При запуске программ используется многопоточность, позволяя одновременно
+		// прогнать тест через эталонное решение и через код ученика.
+		// Даже на небольших работах это экономит ~100мс
+
+		// Здесь создается отдельный канал и горутина (аналогично корутине, но намного легковеснее, т. к. корутины
+		// используют уже созданные ранее треды) для эталонного решения
 		refSolCh := make(chan struct {
 			out string
 			err error
 		})
 
 		go func() {
-			refOut, err := c.runRefSolution(absRefPath, testCase) // горутина 1
+			// Запускаем проверку
+			refOut, err := c.runRefSolution(absRefPath, testCase)
 			refSolCh <- struct {
 				out string
 				err error
 			}{refOut, err}
 		}()
 
+		// Здесь то же самое, но для кода ученика
 		codeCh := make(chan struct {
 			stdErr string
 			err    error
@@ -157,10 +185,11 @@ func (c *Checker) runTests() (string, error) {
 
 			// Сбрасываем позицию input в начало и очищаем файл
 			inputFile.Seek(0, 0)
-			outputFile.Truncate(0) // очищаем output файл
+			outputFile.Truncate(0) // очищаем output файл (чтобы следующий вывод программы не нарушил проверку)
 			outputFile.Seek(0, 0)
 
-			stdErr, err := c.runCode(absCodePath, inputFile, outputFile) // горутина 2
+			// Запускаем код ученика
+			stdErr, err := c.runCode(absCodePath, inputFile, outputFile)
 			if err != nil {
 				codeCh <- struct {
 					stdErr string
@@ -190,6 +219,7 @@ func (c *Checker) runTests() (string, error) {
 			}{"", nil, string(codeOut)}
 		}()
 
+		// Ожидаем выполнения обоих программ
 		refSol := <-refSolCh
 		if refSol.err != nil {
 			return "", err
@@ -203,9 +233,10 @@ func (c *Checker) runTests() (string, error) {
 			return code.stdErr, nil
 		}
 
-		// Ждем выполнения эталонного решения и кода ученика
+		// Сравниваем вывод программ
 		if isCorrect := c.validate(code.out, refSol.out); !isCorrect {
-			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refSol.out, code.out)
+			out := c.redact(code.out)
+			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refSol.out, out)
 			return message, nil
 		}
 	}
@@ -213,17 +244,19 @@ func (c *Checker) runTests() (string, error) {
 	return "OK", nil
 }
 
+// Модуль проверки для монолитных лабораторных работ
 func (c *Checker) monolitTests(compilerCh chan struct {
 	msg string
 	err error
 }) (string, error) {
+	// Создаем канал для получения данных о создании эталонного решения
 	errSolutionCh := make(chan error)
 	go func() {
-		/////////////
 		err := c.createSolution()
 		errSolutionCh <- err
 	}()
 
+	// Проверяем данные из каналов на ошибки и другие выводы
 	out := <-compilerCh
 	if out.err != nil {
 		return "", out.err
@@ -236,6 +269,7 @@ func (c *Checker) monolitTests(compilerCh chan struct {
 	if err != nil {
 		return "", err
 	}
+	// Запускаем тесты
 	msg, err := c.runTests()
 
 	if err != nil {

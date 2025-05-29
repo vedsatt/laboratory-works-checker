@@ -15,6 +15,7 @@ type Config struct {
 	URL  string
 }
 
+// Получаем порт и юрл сервера из переменных сред
 func GetConfig() *Config {
 	c := &Config{
 		Port: defPort,
