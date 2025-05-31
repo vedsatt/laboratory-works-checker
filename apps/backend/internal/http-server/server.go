@@ -1,3 +1,4 @@
+// Package server является http-сервером, через который ппроисходит взаиможействие с checker
 package server
 
 import (
@@ -6,6 +7,8 @@ import (
 	"net/http"
 )
 
+// Структура сервера. С помощью нее создается объект сервера с методом Start()
+// Порт указывается в переменной среде, в случае отсутствия - берется значенеи по умолчанию (80)
 type Server struct {
 	port string
 }
@@ -19,7 +22,7 @@ func New(port string) *Server {
 	return s
 }
 
-// Запуск сервера
+// Запускает сервер
 func (s *Server) Start() {
 	submit := http.HandlerFunc(SubmitLabHandler)
 

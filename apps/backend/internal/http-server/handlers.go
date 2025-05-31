@@ -28,7 +28,7 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Формируем структуру ответа с айди запроса
-	resp := &models.CheckerResponse{}
+	resp := &models.Response{}
 	resp.ID = body.ID
 
 	// Создаем новый объект Checker

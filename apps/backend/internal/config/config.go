@@ -1,3 +1,4 @@
+// Package config позволяет
 package config
 
 import (
@@ -7,19 +8,18 @@ import (
 
 var (
 	defPort string = "80"
-	defURL  string = "localhost"
+	defOS   string = "Windows"
 )
 
+// Конфиг сервера
 type Config struct {
 	Port string
-	URL  string
 }
 
-// Получаем порт и юрл сервера из переменных сред
+// Возвращает порт сервера из переменных сред
 func GetConfig() *Config {
 	c := &Config{
 		Port: defPort,
-		URL:  defURL,
 	}
 
 	if port, ok := os.LookupEnv("PORT"); !ok {
@@ -28,11 +28,14 @@ func GetConfig() *Config {
 		c.Port = port
 	}
 
-	if url, ok := os.LookupEnv("SERVER_URL"); !ok {
-		log.Printf("Server url is unset. Using default value: %v", defURL)
-	} else {
-		c.URL = url
-	}
-
 	return c
+}
+
+// Возвращает ОС из переменных сред (переменная среда ОС задается пользователем)
+func GetOS() string {
+	OS, ok := os.LookupEnv("OS")
+	if !ok {
+		log.Printf("Operating system is unset. Using default value: %v", defOS)
+	}
+	return OS
 }
