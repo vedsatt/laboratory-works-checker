@@ -148,136 +148,123 @@ document.getElementById('variant').addEventListener('input', function() {
     }
 });
 
-// Конфигурация сервера по умолчанию
+// Конфигурация сервера (должна быть объявлена в начале файла)
 const SERVER_CONFIG = {
-    host: process.env.SERVER_HOST || '127.0.0.1',
-    port: process.env.SERVER_PORT || '80',
+    host: window.location.hostname || '127.0.0.1',
+    port: window.location.port || '80',
     apiPath: '/api/v1/submit'
 };
 
-async function submitSolution(labNumber) {
-    //const labNumber = document.getElementById('labNumber').textContent;
-    const variant = document.getElementById('variant').value.trim();
-    const code = document.getElementById('code').value.trim();
-    
-    if (!variant) {
-        alert('Пожалуйста, введите вариант');
-        return;
+// Логирование в консоль с меткой времени
+function log(message, data = null) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${message}`);
+    if (data) {
+        console.log('Data:', JSON.stringify(data, null, 2));
     }
-    
-    if (!code) {
-        alert('Пожалуйста, введите код решения');
-        return;
-    }
-    
+}
+
+// Функция для преобразования кода в строку с экранированными символами
+function escapeCodeString(code) {
+    log('Начало преобразования кода в строку');
     try {
-        // Формируем данные для отправки
-        const requestData = {
-            id: 1, // сгенерировать уникальный айди
-            lab_number: parseInt(labNumber),
-            code: code, // код-строка под json
-            tasks: {} // мапа: ключ task№, значение - вариация таски
-        };
-        
-        // Отправляем запрос на сервер
-        const response = await sendToServer(requestData);
-        
-        // Обрабатываем ответ
-        const isSuccess = response.ResMsg === 'OK';
-        const errorMessage = isSuccess ? '' : response.ResMsg;
-        
-        addToHistory(labNumber, isSuccess, code, errorMessage);
-        
-        // Показываем результат пользователю
-        const resultMessage = isSuccess 
-            ? '<div class="success-message">✓ Решение верное!</div>'
-            : `<div class="error-message">✗ Ошибка в решении: ${errorMessage}</div>
-               <div class="error-note">Строки, начинающиеся с #>, а также описание уведомлений и ошибок не учитываются при проверке ответа</div>`;
-        
-        const historyList = document.getElementById('history-list');
-        historyList.insertAdjacentHTML('afterbegin', resultMessage);
-        
-        // Очищаем поле кода, если решение верное
-        if (isSuccess) {
-            document.getElementById('code').value = '';
-        }
+        const escaped = code
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
+        log('Код успешно преобразован в строку');
+        return escaped;
     } catch (error) {
-        console.error('Ошибка при отправке решения:', error);
-        alert('Произошла ошибка при проверке решения. Пожалуйста, попробуйте позже.');
+        log('Ошибка при преобразовании кода в строку', { error: error.message });
+        throw error;
     }
 }
 
-async function sendToServer(data) {
-    const url = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}$/api/v1/submit`;
+async function submitSolution() {
+    const labNumber = new URLSearchParams(window.location.search).get('lab') || '1';
+    const variantInput = document.getElementById('variant').value;
+    const variant = parseInt(variantInput) || 0;
+    const codeEditor = document.getElementById('code');
+    const code = codeEditor.value;
     
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    });
-    
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-}
-
-function addToHistory(labNumber, isSuccess, code, errorMessage = '') {
-    const historyItem = document.createElement('div');
-    historyItem.className = `history-item ${isSuccess ? 'success' : 'error'}`;
-    
-    const now = new Date();
-    const timestamp = now.toLocaleString();
-    
-    historyItem.innerHTML = `
-        <div class="status">${isSuccess ? '✓ Решение верное' : '✗ Ошибка в решении'}</div>
-        ${errorMessage ? `<div class="error-details">${errorMessage}</div>` : ''}
-        <div class="timestamp">${timestamp}</div>
-        <pre class="code-snippet">${code.substring(0, 100)}${code.length > 100 ? '...' : ''}</pre>
-    `;
-    
-    document.getElementById('history-list').prepend(historyItem);
-    saveToLocalStorage(labNumber, isSuccess, code, timestamp, errorMessage);
-}
-
-function saveToLocalStorage(labNumber, isSuccess, code, timestamp, errorMessage = '') {
-    const history = JSON.parse(localStorage.getItem(`lab_${labNumber}_history`) || '[]');
-    
-    const newHistory = [{
-        success: isSuccess,
-        code: code,
-        timestamp: timestamp,
-        errorMessage: errorMessage
-    }, ...history.slice(0, 9)]; 
-
-    localStorage.setItem(`lab_${labNumber}_history`, JSON.stringify(newHistory));
-}
-
-function loadSolutionHistory(labNumber) {
-    const history = JSON.parse(localStorage.getItem(`lab_${labNumber}_history`) || '[]');
-    const historyList = document.getElementById('history-list');
-    
-    historyList.innerHTML = '';
-    
-    if (history.length === 0) {
-        historyList.innerHTML = '<p>Здесь будет отображаться история ваших решений</p>';
+    if (!code.trim()) {
+        alert('Пожалуйста, введите код для отправки');
         return;
     }
-    
-    history.forEach(item => {
-        const historyItem = document.createElement('div');
-        historyItem.className = `history-item ${item.success ? 'success' : 'error'}`;
+
+    if (!variantInput) {
+        alert('Пожалуйста, укажите вариант');
+        return;
+    }
+
+    try {
+        // Собираем данные для отправки
+        const requestData = {
+            id: Date.now(),
+            lab_number: parseInt(labNumber),
+            code: escapeCodeString(code),
+            tasks: {},
+            task: 0
+        };
+
+        // Получаем информацию о вариантах для каждой части
+        const filePath = `../../labs/lab${labNumber}/description.md`;
+        const descriptionResponse = await fetch(filePath);
         
-        historyItem.innerHTML = `
-            <div class="status">${item.success ? '✓ Решение верное' : '✗ Ошибка в решении'}</div>
-            ${item.errorMessage ? `<div class="error-details">${item.errorMessage}</div>` : ''}
-            <div class="timestamp">${item.timestamp}</div>
-            <pre class="code-snippet">${item.code.substring(0, 100)}${item.code.length > 100 ? '...' : ''}</pre>
-        `;
+        if (!descriptionResponse.ok) throw new Error('Файл с описанием не найден');
         
-        historyList.appendChild(historyItem);
-    });
+        const mdContent = await descriptionResponse.text();
+        const parts = mdContent.split('### Часть').slice(1);
+        
+        // Заполняем Tasks
+        parts.forEach((part, partIndex) => {
+            const items = part.split(/\n\d+\./).slice(1);
+            if (items.length > 0) {
+                const selectedIndex = variant % items.length;
+                requestData.tasks[`task${partIndex + 1}`] = selectedIndex + 1;
+            }
+        });
+
+        // Если нужно отправить только текущую часть
+        const currentTaskElement = document.querySelector('input[name="current-task"]:checked');
+        if (currentTaskElement) {
+            requestData.task = parseInt(currentTaskElement.value);
+        }
+
+        log('Подготовка данных для отправки', requestData);
+
+        // Отправляем запрос на сервер
+        //const serverUrl = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}${SERVER_CONFIG.apiPath}`;
+        const serverUrl = `http://localhost:80/api/v1/submit`
+        const serverResponse = await fetch(serverUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!serverResponse.ok) {
+            const errorData = await serverResponse.json();
+            throw new Error(errorData.message || 'Ошибка сервера');
+        }
+
+        const result = await serverResponse.json();
+        log('Ответ сервера', result);
+        alert('Решение успешно отправлено на проверку!');
+        
+        // Обновляем историю решений
+        loadSolutionHistory(labNumber);
+
+    } catch (error) {
+        log('Ошибка при отправке решения', { error: error.message });
+        alert(`Ошибка: ${error.message}`);
+    }
 }
+
+// Добавляем обработчик события после загрузки DOM
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('submit-btn').addEventListener('click', submitSolution);
+});
