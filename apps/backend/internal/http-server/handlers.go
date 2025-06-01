@@ -13,7 +13,7 @@ import (
 func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 	// Пропускается только метод POST
 	if r.Method != http.MethodPost {
-		http.Error(w, "invalid request method, use the POST method", http.StatusMethodNotAllowed)
+		http.Error(w, fmt.Sprintf("invalid request method: %v, use the POST method", r.Method), http.StatusMethodNotAllowed)
 		log.Println("invalid request method")
 		return
 	}
