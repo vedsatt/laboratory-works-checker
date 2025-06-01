@@ -1,3 +1,4 @@
+// Package checker представляет собой модуль для ппроверки лабораторных работ
 package checker
 
 import (
@@ -8,9 +9,19 @@ import (
 	"os/exec"
 	"strconv"
 
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/config"
 	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/models"
 )
 
+// Структура для конфига конкретной лабораторной работы
+// Конфиг берется из файла config.json в папке labs/lab<№>
+//
+//	type labConfig struct {
+//		Language: язык, на котором написана программа (на данный момент поддерживается C/C++)
+//		LabType: тип лабораторной работы (splited - где каждая часть явл. отдельной программой; monolit - каждая часть является подпрограммой)
+//		TasksCount: Количество частей в лабораторной работе
+//		TestCases: общие тест-кейсы в случае monolit
+//	}
 type labConfig struct {
 	Language   string   `json:"language"`
 	LabType    string   `json:"type"`
@@ -18,19 +29,30 @@ type labConfig struct {
 	TestCases  []string `json:"test-cases"`
 }
 
+// Стркутура для объекта Checker, который проверяет работы
+//
+//	type Checker struct {
+//		OS: конкретная ОС (Windows/Linux)
+//		labConfig: конфиг лабораторной работы
+//		lab: объект лабораторной работы
+//		tempDirPath: временная директория, в которой проверяется текущая лабораторная работа
+//	}
 type Checker struct {
+	OS          string
 	labConfig   *labConfig
 	lab         *models.LabRequest
 	tempDirPath string
-	result      *models.CheckerResponse
 }
 
 // Создает объект структуры Checker, через которую будет проводиться дальнейшая проверка.
 // P.S. Для тех, кто не особо знаком с Go - у структур есть свои методы, это аналогично классам в других языках
 func New(lab *models.LabRequest) (*Checker, error) {
+	// Получаем данные об операционной системе
+	OS := config.GetOS()
+
 	checker := &Checker{
-		lab:    lab,
-		result: &models.CheckerResponse{},
+		OS:  OS,
+		lab: lab,
 	}
 
 	// Получаем данные их конфига лабы

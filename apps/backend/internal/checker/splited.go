@@ -9,10 +9,13 @@ import (
 	"path/filepath"
 )
 
+// Структура для конкретного тест-кейса
 type testCase struct {
 	Input  string `json:"input"`
 	Output string `json:"output"`
 }
+
+// Структура для всех тест-кейсов
 type testCases struct {
 	TestCases []testCase `json:"test-cases"`
 }
@@ -63,7 +66,13 @@ func (c *Checker) runTestCases(tc *testCases) (string, error) {
 	defer outputFile.Close()
 
 	// Получаем абсолютный путь к файлу с кодом
-	execPath := fmt.Sprintf("./%v/code.exe", c.tempDirPath)
+	var execPath string
+	switch c.OS {
+	case "Windows":
+		execPath = fmt.Sprintf("./%v/code.exe", c.tempDirPath)
+	case "Linux":
+		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
+	}
 	absCodePath, _ := filepath.Abs(execPath)
 
 	// Проходимся по тест-кейсам и запускаем программы

@@ -98,10 +98,15 @@ func (c *Checker) runTests() (string, error) {
 	}
 	defer outputFile.Close()
 
-	// Чтобы лишний раз не использовать системный вызов для эталонного решения
-	// весь ввод и вывод - строка из конфига лаб. работы,
-	// т.к. это удобнее и ускоряет работу программы
-	execPath := fmt.Sprintf("./%v/code.exe", c.tempDirPath)
+	// Получаем абсолютный путь для кода
+
+	var execPath string
+	switch c.OS {
+	case "Windows":
+		execPath = fmt.Sprintf("./%v/code.exe", c.tempDirPath)
+	case "Linux":
+		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
+	}
 	absCodePath, _ := filepath.Abs(execPath)
 	refPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
 	absRefPath, _ := filepath.Abs(refPath)
