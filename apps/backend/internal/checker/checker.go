@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/config"
 	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/models"
 )
 
@@ -48,7 +48,7 @@ type Checker struct {
 // P.S. Для тех, кто не особо знаком с Go - у структур есть свои методы, это аналогично классам в других языках
 func New(lab *models.LabRequest) (*Checker, error) {
 	// Получаем данные об операционной системе
-	OS := config.GetOS()
+	OS := runtime.GOOS
 
 	checker := &Checker{
 		OS:  OS,
@@ -146,7 +146,7 @@ func (c *Checker) createAndCompile() (string, error) {
 	// Запускаем компиляцию и удаляем временный файл с кодом
 	if err := cmd.Run(); err != nil {
 		log.Println(fmt.Errorf("compilation failed: %w", err))
-		return err.Error(), nil
+		return fmt.Sprintf("compilation failed: %v", err.Error()), nil
 	}
 	os.Remove(codeFilePath)
 

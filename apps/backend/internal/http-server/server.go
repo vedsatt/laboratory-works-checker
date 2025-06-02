@@ -33,5 +33,6 @@ func (s *Server) Start() {
 	mux.Handle("/api/v1/submit", logsMiddleware(enableCORS(submit)))
 
 	log.Printf("Starting server on port: %v", s.port)
+	// http.ListenAndServeTLS(s.port, "server.crt", "server.key", mux)
 	http.ListenAndServe(s.port, mux)
 }

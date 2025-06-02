@@ -98,15 +98,19 @@ func (c *Checker) runTests() (string, error) {
 	}
 	defer outputFile.Close()
 
-	// Получаем абсолютный путь для кода
-
+	// Получаем абсолютный путь для кода в зависимости от ОС
 	var execPath string
 	switch c.OS {
-	case "Windows":
+	case "windows":
 		execPath = fmt.Sprintf("./%v/code.exe", c.tempDirPath)
-	case "Linux":
+	case "linux":
 		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
+	default:
+		err := fmt.Errorf("please use the appropriate OS: Windows/Linux")
+		log.Printf("the program does not support the current OS: %v", c.OS)
+		return "", err
 	}
+
 	absCodePath, _ := filepath.Abs(execPath)
 	refPath := fmt.Sprintf("./%v/ref-solution.py", c.tempDirPath)
 	absRefPath, _ := filepath.Abs(refPath)
@@ -155,13 +159,44 @@ func (c *Checker) runTests() (string, error) {
 			}
 
 			// Сбрасываем позицию input в начало и очищаем файл
-			inputFile.Seek(0, 0)
-			outputFile.Truncate(0) // очищаем output файл (чтобы следующий вывод программы не нарушил проверку)
-			outputFile.Seek(0, 0)
+			_, err = inputFile.Seek(0, 0)
+			if err != nil {
+				e := fmt.Errorf("error with setting start pos in input file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
+
+			err = outputFile.Truncate(0) // очищаем output файл (чтобы следующий вывод программы не нарушил проверку)
+			if err != nil {
+				e := fmt.Errorf("error with cleaning output file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
+
+			_, err = outputFile.Seek(0, 0)
+			if err != nil {
+				e := fmt.Errorf("error with setting start pos in output file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
 
 			// Запускаем код ученика
 			stdErr, err := c.runCode(absCodePath, inputFile, outputFile)
 			if err != nil {
+				e := fmt.Sprintf("err with student code: %v", err)
+				log.Println(e)
 				codeCh <- struct {
 					stdErr string
 					err    error
@@ -176,13 +211,41 @@ func (c *Checker) runTests() (string, error) {
 					out    string
 				}{stdErr, nil, ""}
 			}
-
 			// Сохраняем данные из буфера в файл и смещаем позицию чтения на 0,
 			// чтобы получить вывод программы ученика
-			outputFile.Sync()
-			outputFile.Seek(0, 0)
+			err = outputFile.Sync()
+			if err != nil {
+				e := fmt.Errorf("error with sync output file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
 
-			codeOut, _ := io.ReadAll(outputFile)
+			_, err = outputFile.Seek(0, 0)
+			if err != nil {
+				e := fmt.Errorf("error with setting start pos in output file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
+
+			codeOut, err := io.ReadAll(outputFile)
+			if err != nil {
+				e := fmt.Errorf("error with reading from output file: %v", err)
+				log.Println(e)
+				codeCh <- struct {
+					stdErr string
+					err    error
+					out    string
+				}{"", e, ""}
+			}
+
 			codeCh <- struct {
 				stdErr string
 				err    error

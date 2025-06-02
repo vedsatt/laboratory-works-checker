@@ -8,7 +8,6 @@ import (
 
 var (
 	defPort string = "80"
-	defOS   string = "Windows"
 )
 
 // Конфиг сервера
@@ -29,13 +28,4 @@ func GetConfig() *Config {
 	}
 
 	return c
-}
-
-// Возвращает ОС из переменных сред (переменная среда ОС задается пользователем)
-func GetOS() string {
-	OS, ok := os.LookupEnv("OS")
-	if !ok {
-		log.Printf("Operating system is unset. Using default value: %v", defOS)
-	}
-	return OS
 }
