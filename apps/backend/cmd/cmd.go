@@ -14,6 +14,6 @@ func main() {
 	cfg := config.GetConfig()
 
 	// создаем объект сервера, настраиваем и запускаем его
-	server := server.New(cfg.Port)
+	server := server.New(cfg.Port, cfg.HttpsPort, "server.crt", "server.key")
 	server.Start()
 }
