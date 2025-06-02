@@ -315,3 +315,40 @@ h2 {
     border-left: 4px solid #dc3545;
     font-weight: bold;
 }
+
+.history-item {
+    background: #252525;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+}
+
+.history-item.success {
+    border-left: 4px solid #28a745;
+}
+
+.history-item.error {
+    border-left: 4px solid #dc3545;
+}
+
+.toggle-details {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.toggle-details:hover {
+    background: #2980b9;
+}
+
+.details pre {
+    background: #1a1a1a;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
