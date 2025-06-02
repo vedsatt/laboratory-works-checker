@@ -4,6 +4,52 @@ const md = window.markdownit({
   typographer: true,
 });
 
+function loadSolutionHistory() {
+    const historyList = document.getElementById('history-list');
+    const history = JSON.parse(localStorage.getItem('solutionsHistory') || '[]');
+
+    historyList.innerHTML = '';
+
+    if (history.length === 0) {
+        historyList.innerHTML = '<p>История решений пуста.</p>';
+        return;
+    }
+
+    // Сортируем по дате (новые сверху)
+    history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    history.forEach((item, index) => {
+        const solutionElement = document.createElement('div');
+        solutionElement.className = `history-item ${item.status}`;
+
+        solutionElement.innerHTML = `
+            <div class="status">
+                ${item.status === 'success' ? '✅ Верно' : '❌ Ошибка'} 
+                <small>${new Date(item.timestamp).toLocaleString()}</small>
+            </div>
+            <button class="toggle-details">Показать детали</button>
+            <div class="details" style="display: none;">
+                <h4>Код:</h4>
+                <pre>${item.code || 'Код не сохранен'}</pre>
+                <h4>Ответ сервера:</h4>
+                <pre>${JSON.stringify(item.serverResponse, null, 2)}</pre>
+            </div>
+        `;
+
+        const toggleBtn = solutionElement.querySelector('.toggle-details');
+        const details = solutionElement.querySelector('.details');
+
+        toggleBtn.addEventListener('click', () => {
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            toggleBtn.textContent = details.style.display === 'none' 
+                ? 'Показать детали' 
+                : 'Скрыть детали';
+        });
+
+        historyList.appendChild(solutionElement);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const labNumber = urlParams.get('lab') || '1';
@@ -182,6 +228,12 @@ function escapeCodeString(code) {
     }
 }
 
+function saveToHistory(solution) {
+    const history = JSON.parse(localStorage.getItem('solutionsHistory') || '[]');
+    history.push(solution);
+    localStorage.setItem('solutionsHistory', JSON.stringify(history));
+}
+
 async function submitSolution() {
     const labNumber = new URLSearchParams(window.location.search).get('lab') || '1';
     const variantInput = document.getElementById('variant').value;
@@ -253,6 +305,12 @@ async function submitSolution() {
 
         const result = await serverResponse.json();
         log('Ответ сервера', result);
+        saveToHistory({
+            code: document.getElementById('code').value,
+            serverResponse: result,
+            status: serverResponse.ok ? 'success' : 'error',
+            timestamp: new Date().toISOString()
+        });        
         alert('Решение успешно отправлено на проверку!');
         
         // Обновляем историю решений
