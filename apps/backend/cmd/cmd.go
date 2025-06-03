@@ -13,7 +13,10 @@ func main() {
 	// Получаем данные из переменных сред (еще одно удобство докера)
 	cfg := config.GetConfig()
 
-	// создаем объект сервера, настраиваем и запускаем его
-	server := server.New(cfg.Port, cfg.HttpsPort, "server.crt", "server.key")
+	// создает объект сервера и настраивает его
+	// cert.pem - сертификат TLS
+	// key.pem - ключ
+	// этих файлов нет и они служат заглушкой при тестировании
+	server := server.New(cfg.Port, cfg.HttpsPort, "cert.pem", "key.pem")
 	server.Start()
 }
