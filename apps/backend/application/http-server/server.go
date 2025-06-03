@@ -1,3 +1,4 @@
+// Package server запускает http/https сервер, который принимает лаботараторные работы на проверку
 package server
 
 import (

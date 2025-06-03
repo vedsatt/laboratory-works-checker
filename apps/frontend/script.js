@@ -289,7 +289,7 @@ async function submitSolution() {
 
         // Отправляем запрос на сервер
         //const serverUrl = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}${SERVER_CONFIG.apiPath}`;
-        const serverUrl = `http://localhost:80/api/v1/submit`
+        const serverUrl = `http ://localhost:80/api/v1/submit`
         const serverResponse = await fetch(serverUrl, {
             method: 'POST',
             headers: {
