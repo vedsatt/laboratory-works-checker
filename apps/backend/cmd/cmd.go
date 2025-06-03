@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/cleaner"
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/config"
-	server "github.com/vedsatt/laboratory-works-checker/apps/backend/internal/http-server"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/application/cleaner"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/application/config"
+	server "github.com/vedsatt/laboratory-works-checker/apps/backend/application/http-server"
 )
 
 func main() {

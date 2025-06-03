@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/checker"
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/models"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/application/checker"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/application/models"
 )
 
 func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {

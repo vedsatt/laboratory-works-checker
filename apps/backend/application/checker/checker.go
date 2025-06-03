@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/models"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/application/models"
 )
 
 // Структура для конфига конкретной лабораторной работы
