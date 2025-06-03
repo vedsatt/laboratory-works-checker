@@ -1,4 +1,3 @@
-// Package server является https-сервером, через который происходит взаимодействие с checker
 package server
 
 import (

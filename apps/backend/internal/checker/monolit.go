@@ -1,4 +1,3 @@
-// Package checker представляет собой модуль для ппроверки лабораторных работ
 package checker
 
 import (
