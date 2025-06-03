@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vedsatt/laboratory-works-checker/apps/backend/cleaner"
+	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/cleaner"
 	"github.com/vedsatt/laboratory-works-checker/apps/backend/internal/config"
 	server "github.com/vedsatt/laboratory-works-checker/apps/backend/internal/http-server"
 )

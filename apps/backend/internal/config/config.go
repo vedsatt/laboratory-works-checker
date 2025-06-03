@@ -1,4 +1,4 @@
-// Package config позволяет
+// Package config получает данные из переменных сред.
 package config
 
 import (
@@ -19,6 +19,7 @@ type Config struct {
 
 // Возвращает порт сервера из переменных сред
 func GetConfig() *Config {
+	// Устанавливаем значения по умолчанию сразу
 	c := &Config{
 		Port:      defPort,
 		HttpsPort: defHttpsPort,
