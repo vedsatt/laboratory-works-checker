@@ -89,6 +89,6 @@ func (s *Server) Start() {
 	// Хендлер для отправки работ на проверку
 	mux.Handle("/api/v1/submit", logsMiddleware(enableCORS(submit)))
 
-	log.Printf("Starting HTTPS server on port: %v", s.httpsPort)
+	log.Printf("Starting HTTP server on port: %v", s.port)
 	log.Fatal(http.ListenAndServe(s.port, mux))
 }

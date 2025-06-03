@@ -50,6 +50,7 @@ func SubmitLabHandler(w http.ResponseWriter, r *http.Request) {
 	resp.ResMsg = msg
 
 	// Возвращаем ответ
+	log.Printf("Response was sent, msg: %v", msg)
 	w.Header().Set("Content-type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
