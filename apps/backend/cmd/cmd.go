@@ -1,3 +1,4 @@
+// Package main звпускает cleaner, получает конфиг, настраивает и запускает сервер
 package main
 
 import (

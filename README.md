@@ -166,7 +166,7 @@ go install golang.org/x/tools/cmd/godoc@latest
 ```
 2. Запустите локальный сайт с документацией:
 ```bash
-godoc -htttp=:6060
+godoc -http=:6060
 ```
 3. Перейдите на сайт http://localhost:6060/pkg/github.com/vedsatt/laboratory-works-checker
 ## Контакты
