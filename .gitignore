@@ -3,3 +3,5 @@ test-lab1.c
 test-lab1.exe
 server.crt
 server.key
+cert.pem
+key.pem

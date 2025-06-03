@@ -17,7 +17,7 @@ func logsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// Разрашает запросы с другого домена
+// Разрешает запросы с другого домена
 func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
