@@ -3,6 +3,8 @@ package checker
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"slices"
@@ -10,36 +12,90 @@ import (
 	"time"
 )
 
-// Запускает код ученика с конкретным тест-кейсом
-func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) (string, error) {
-	// Создаем контекст с отменой, чтобы принудительно остановить программу в случая превышения допустимого времени выполнения
+// Обрабатывает ошибки процесса (таймаут, stderr и т.д.)
+func handleProcessError(err error, ctx context.Context, stderr *bytes.Buffer) error {
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("Превышено максимальное время выполнения")
+	}
+	if err != nil {
+		if stderr.String() != "" {
+			return fmt.Errorf("%s", stderr.String())
+		}
+		return fmt.Errorf("Ошибка выполнения программы: %v", err)
+	}
+	return nil
+}
+
+// Запускает код ученика с конкретным тест-кейсом и отслеживает раннее завершение.
+func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) error {
+	// Контекст с таймаутом для контроля времени выполнения
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Создаем команду и перенаправляем ввод и вывод
+	// Создаем команду
 	cmd := exec.CommandContext(ctx, absPath)
 	var stderr bytes.Buffer
-	cmd.Stdin = inputFile
-	cmd.Stdout = outputFile
 	cmd.Stderr = &stderr
 
-	// Запускаем код и в случае длительного выполнения принудительно останавливаем
-	err := cmd.Run()
-	defer func() {
-		if cmd.Process != nil {
-			cmd.Process.Kill()
-		}
-	}()
+	// Перенаправляем stdout в файл
+	cmd.Stdout = outputFile
 
-	// В случае принудительной остановки кода возвращаем ответ о неверном решении
+	// Получаем Pipe для stdin, чтобы контролировать запись
+	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "Превышено максимальное время выполнения.", nil
-		}
-		return stderr.String(), err
+		return fmt.Errorf("Не удалось создать stdin pipe: %v", err)
 	}
 
-	return "", nil
+	// Запускаем процесс
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("Не удалось запустить программу: %v", err)
+	}
+
+	// Канал для сигнала об окончании записи входных данных
+	writeDone := make(chan error, 1)
+	// Канал для сигнала о завершении процесса
+	processDone := make(chan error, 1)
+
+	// Горутина для записи входных данных
+	go func() {
+		defer close(writeDone)
+		_, err := io.Copy(stdinPipe, inputFile)
+		if err != nil {
+			writeDone <- fmt.Errorf("Ошибка записи в stdin: %v", err)
+			return
+		}
+		// Закрываем stdin после записи
+		if err := stdinPipe.Close(); err != nil {
+			writeDone <- fmt.Errorf("Ошибка закрытия stdin: %v", err)
+			return
+		}
+		writeDone <- nil
+	}()
+
+	// Горутина для ожидания завершения процесса
+	go func() {
+		processDone <- cmd.Wait()
+	}()
+
+	// Ожидаем либо завершения записи, либо завершения процесса
+	select {
+	case writeErr := <-writeDone:
+		if writeErr != nil {
+			return fmt.Errorf("Программа завершилась некорректно: %v", writeErr)
+		}
+		// Дожидаемся завершения процесса в случае успешной записи
+		select {
+		case procErr := <-processDone:
+			return handleProcessError(procErr, ctx, &stderr)
+		case <-ctx.Done():
+			return fmt.Errorf("Превышено максимальное время выполнения")
+		}
+	case procErr := <-processDone:
+		// Программа завершилась до окончания записи ввода
+		return fmt.Errorf("Программа завершилась некорректно (раннее завершение): %v", procErr)
+	case <-ctx.Done():
+		return fmt.Errorf("Превышено максимальное время выполнения")
+	}
 }
 
 // Проверяет, является ли вывод уведомлением об ошибке или граничном случае

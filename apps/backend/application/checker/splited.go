@@ -92,12 +92,8 @@ func (c *Checker) runTestCases(tc *testCases) (string, error) {
 		outputFile.Seek(0, 0)
 
 		// Запускаем код ученика
-		stdErr, err := c.runCode(absCodePath, inputFile, outputFile)
+		err := c.runCode(absCodePath, inputFile, outputFile)
 		if err != nil {
-			return "", err
-		}
-
-		if stdErr != "" {
 			return "", err
 		}
 

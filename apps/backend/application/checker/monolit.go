@@ -141,9 +141,8 @@ func (c *Checker) runTests() (string, error) {
 
 		// Здесь то же самое, но для кода ученика
 		codeCh := make(chan struct {
-			stdErr string
-			err    error
-			out    string
+			err error
+			out string
 		})
 
 		go func() {
@@ -152,10 +151,10 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with wtriting test-case to the input file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			// Сбрасываем позицию input в начало и очищаем файл
@@ -164,10 +163,10 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with setting start pos in input file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			err = outputFile.Truncate(0) // очищаем output файл (чтобы следующий вывод программы не нарушил проверку)
@@ -175,10 +174,10 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with cleaning output file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			_, err = outputFile.Seek(0, 0)
@@ -186,31 +185,23 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with setting start pos in output file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			// Запускаем код ученика
-			stdErr, err := c.runCode(absCodePath, inputFile, outputFile)
+			err := c.runCode(absCodePath, inputFile, outputFile)
 			if err != nil {
-				e := fmt.Sprintf("err with student code: %v", err)
-				log.Println(e)
+				log.Println(fmt.Errorf("error with student code: %v", err))
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", err, ""}
+					err error
+					out string
+				}{err, ""}
+				return
 			}
 
-			if stdErr != "" {
-				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{stdErr, nil, ""}
-			}
 			// Сохраняем данные из буфера в файл и смещаем позицию чтения на 0,
 			// чтобы получить вывод программы ученика
 			err = outputFile.Sync()
@@ -218,10 +209,10 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with sync output file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			_, err = outputFile.Seek(0, 0)
@@ -229,10 +220,10 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with setting start pos in output file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			codeOut, err := io.ReadAll(outputFile)
@@ -240,31 +231,30 @@ func (c *Checker) runTests() (string, error) {
 				e := fmt.Errorf("error with reading from output file: %v", err)
 				log.Println(e)
 				codeCh <- struct {
-					stdErr string
-					err    error
-					out    string
-				}{"", e, ""}
+					err error
+					out string
+				}{e, ""}
+				return
 			}
 
 			codeCh <- struct {
-				stdErr string
-				err    error
-				out    string
-			}{"", nil, string(codeOut)}
+				err error
+				out string
+			}{nil, string(codeOut)}
 		}()
 
 		// Ожидаем выполнения обоих программ
+		code := <-codeCh
+
 		refSol := <-refSolCh
 		if refSol.err != nil {
 			return "", err
 		}
 
-		code := <-codeCh
+		// Проверяем выполнение кода ученика на ошибки
 		if code.err != nil {
-			return "", err
-		}
-		if code.stdErr != "" {
-			return code.stdErr, nil
+			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refSol.out, code.err)
+			return message, nil
 		}
 
 		// Сравниваем вывод программ

@@ -2,6 +2,7 @@
 package checker
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -38,6 +39,8 @@ type labConfig struct {
 //		tempDirPath: временная директория, в которой проверяется текущая лабораторная работа
 //	}
 type Checker struct {
+	ctx         context.Context
+	cancel      context.CancelFunc
 	OS          string
 	labConfig   *labConfig
 	lab         *models.LabRequest
@@ -50,9 +53,13 @@ func New(lab *models.LabRequest) (*Checker, error) {
 	// Получаем данные об операционной системе
 	OS := runtime.GOOS
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	checker := &Checker{
-		OS:  OS,
-		lab: lab,
+		ctx:    ctx,
+		cancel: cancel,
+		OS:     OS,
+		lab:    lab,
 	}
 
 	// Получаем данные их конфига лабы
@@ -110,6 +117,7 @@ func (c *Checker) createAndCompile() (string, error) {
 		log.Println(e)
 		return "", e
 	}
+	defer codeFile.Close()
 
 	// Парсим строку из json в нормальный код
 	code, err := strconv.Unquote(`"` + c.lab.Code + `"`)
@@ -166,7 +174,12 @@ func (c *Checker) Check() (string, error) {
 		return "", e
 	}
 
-	defer os.RemoveAll(dirPath)
+	defer func() {
+		if err := os.RemoveAll(dirPath); err != nil {
+			log.Printf("warning: failed to remove temp directory %s: %v", dirPath, err)
+		}
+		c.tempDirPath = ""
+	}()
 
 	c.tempDirPath = dirPath
 
