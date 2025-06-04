@@ -20,39 +20,90 @@ function loadSolutionHistory() {
 
     history.forEach((item, index) => {
         const solutionElement = document.createElement('div');
-        solutionElement.className = `history-item ${item.status}`;
+        
+        // Проверяем, содержит ли ответ сервера "OK"
+        const isSuccess = item.serverResponse && 
+                         item.serverResponse.res_msg && 
+                         item.serverResponse.res_msg.includes("OK");
+        
+        solutionElement.className = `history-item ${isSuccess ? 'success' : 'error'}`;
 
-        solutionElement.innerHTML = `
-            <div class="status">
-                ${item.status === 'success' ? '✅ Верно' : '❌ Ошибка'} 
-                <small>${new Date(item.timestamp).toLocaleString()}</small>
-            </div>
-            <button class="toggle-details">Показать детали</button>
-            <div class="details" style="display: none;">
-                <h4>Код:</h4>
-                <pre>${item.code || 'Код не сохранен'}</pre>
-                <h4>Ответ сервера:</h4>
-                <pre>${JSON.stringify(item.serverResponse, null, 2)}</pre>
-            </div>
-        `;
+        if (isSuccess) {
+            // Для успешных решений - просто статус и дата
+            solutionElement.innerHTML = `
+                <div class="status">
+                    ✅ Верно 
+                    <small>${new Date(item.timestamp).toLocaleString()}</small>
+                </div>
+            `;
+        } else {
+            // Для ошибок - добавляем кнопку для просмотра деталей
+            solutionElement.innerHTML = `
+                <div class="status">
+                    ❌ Ошибка
+                    <small>${new Date(item.timestamp).toLocaleString()}</small>
+                </div>
+                <button class="toggle-details">Показать детали</button>
+                <div class="details" style="display: none;">
+                    <h4>Ответ сервера:</h4>
+                    <pre class="server-response">${formatServerResponse(item.serverResponse)}</pre>
+                </div>
+            `;
 
-        const toggleBtn = solutionElement.querySelector('.toggle-details');
-        const details = solutionElement.querySelector('.details');
+            const toggleBtn = solutionElement.querySelector('.toggle-details');
+            const details = solutionElement.querySelector('.details');
 
-        toggleBtn.addEventListener('click', () => {
-            details.style.display = details.style.display === 'none' ? 'block' : 'none';
-            toggleBtn.textContent = details.style.display === 'none' 
-                ? 'Показать детали' 
-                : 'Скрыть детали';
-        });
+            toggleBtn.addEventListener('click', () => {
+                details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                toggleBtn.textContent = details.style.display === 'none' 
+                    ? 'Показать детали' 
+                    : 'Скрыть детали';
+            });
+        }
 
         historyList.appendChild(solutionElement);
     });
 }
 
+// Функция для форматирования ответа сервера
+function formatServerResponse(response) {
+    if (!response || !response.res_msg) return 'Нет данных об ответе сервера';
+    
+    // Форматируем сообщение для лучшего отображения
+    let formattedMsg = response.res_msg
+        .replace(/\\n/g, '\n')  // Заменяем \n на переносы строк
+        .replace(/\\r/g, '\r')  // Заменяем \r на возврат каретки
+        .replace(/\\t/g, '\t'); // Заменяем \t на табуляцию
+    
+    // Удаляем лишние кавычки, если они есть
+    if (formattedMsg.startsWith('"') && formattedMsg.endsWith('"')) {
+        formattedMsg = formattedMsg.slice(1, -1);
+    }
+    
+    return formattedMsg;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const labNumber = urlParams.get('lab') || '1';
+    const codeEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
+        mode: 'text/x-c++src', // Важно: меняем режим с Python на C++
+        theme: 'dracula',
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        extraKeys: {
+            "Ctrl-Space": "autocomplete", // Добавляем автодополнение
+            "Tab": function(cm) {
+                cm.replaceSelection("    ", "end");
+            }
+        }
+    });
+
+    window.codeEditor = codeEditor;
 
     if (!labNumber || labNumber < 1 || labNumber > 11) {
         window.location.href = 'index.html';
@@ -87,99 +138,57 @@ async function loadLabDescription(labNumber) {
 }
 
 async function loadTasks(labNumber) {
-    console.log('--- Начало выполнения loadTasks() ---');
-    
-    console.log('1. Получен номер лабораторной:', labNumber);
-    
     const variantInput = document.getElementById('variant').value;
-    console.log('2. Получен ввод варианта:', variantInput);
-    
     const variant = parseInt(variantInput) || 0;
-    console.log('3. Числовое значение варианта:', variant);
-    
     const tasksContainer = document.getElementById('tasks-container');
-    console.log('4. Контейнер заданий получен:', tasksContainer);
-    
+
     try {
-        console.log('5. Пытаюсь загрузить файл с описанием...');
         const filePath = `../../labs/lab${labNumber}/description.md`;
-        console.log('6. Путь к файлу:', filePath);
-        
         const response = await fetch(filePath);
-        console.log('7. Ответ от fetch:', response);
-        
         if (!response.ok) {
-            console.error('8. Ошибка: файл не найден или ошибка сервера');
             throw new Error('Файл с описанием не найден');
         }
-        
-        const mdContent = await response.text();
-        console.log('9. Содержимое файла получено, длина:', mdContent.length);
-        console.log('10. Первые 100 символов:', mdContent.substring(0, 100));
+        const mdContent = await response.text();    
         
         // Разделяем на части
         const parts = mdContent.split('### Часть').slice(1);
-        console.log('11. Найдено частей:', parts.length);
-        
         tasksContainer.innerHTML = '';
-        console.log('12. Контейнер заданий очищен');
-        
+
         if (parts.length === 0) {
-            console.log('13. Нет частей для отображения');
             tasksContainer.innerHTML = '<p>Задания не найдены</p>';
             return;
         }
 
-        parts.forEach((part, partIndex) => {
-            console.log(`14. Обработка части ${partIndex + 1}`);
-            
-            const items = part.split(/\n\d+\./).slice(1); // разделяем часть на пункты
-            console.log(`15. В части ${partIndex + 1} найдено пунктов:`, items.length);
-            
+        parts.forEach((part, partIndex) => {            
+            const items = part.split(/\n\d+\./).slice(1); // разделяем часть на пункты            
             if (items.length === 0) {
-                console.log(`16. Часть ${partIndex + 1} не содержит пунктов`);
                 return;
             }
 
             const selectedIndex = variant % items.length; // вычисляем индекс выбранного пункта
-            console.log(`17. Для варианта ${variant} выбран индекс:`, selectedIndex);
-            
-            const selectedItem = items[selectedIndex].trim();
-            console.log(`18. Выбранный пункт:`, selectedItem);
-            
+            const selectedItem = items[selectedIndex].trim();    
+
             // Создаем элемент для отображения задания
             const partElement = document.createElement('div');
-            partElement.className = 'task-part';
-            
+            partElement.className = 'task-part';            
             const partTitle = document.createElement('h3');
-            partTitle.textContent = `Часть ${partIndex + 1}`;
-            
-            const taskContent = document.createElement('div');
-            console.log('19. Пытаюсь отрендерить markdown...');
-            
+            partTitle.textContent = `Часть ${partIndex + 1}`;            
+            const taskContent = document.createElement('div');            
+
             if (!window.markdownit) {
-                console.error('20. Ошибка: markdownit не загружен!');
                 taskContent.textContent = `1.${selectedItem}`;
             } else {
                 const md = window.markdownit();
                 taskContent.innerHTML = md.render(`${selectedItem}`);
-                console.log('21. Markdown успешно отрендерен');
-            }
-            
+            }  
+
             partElement.appendChild(partTitle);
             partElement.appendChild(taskContent);
             tasksContainer.appendChild(partElement);
-            console.log(`22. Часть ${partIndex + 1} добавлена в контейнер`);
         });
-        
-        console.log('23. Все части успешно обработаны');
-        
     } catch (error) {
-        console.error('24. Произошла ошибка:', error);
         tasksContainer.innerHTML = `<p>Ошибка загрузки заданий: ${error.message}</p>`;
-    }
-    
-    console.log('--- Конец выполнения loadTasks() ---');
+    }  
 }
 
 
@@ -238,8 +247,8 @@ async function submitSolution() {
     const labNumber = new URLSearchParams(window.location.search).get('lab') || '1';
     const variantInput = document.getElementById('variant').value;
     const variant = parseInt(variantInput) || 0;
+    const code = window.codeEditor.getValue();
     const codeEditor = document.getElementById('code');
-    const code = codeEditor.value;
     
     if (!code.trim()) {
         alert('Пожалуйста, введите код для отправки');
