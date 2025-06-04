@@ -352,3 +352,35 @@ h2 {
     overflow-x: auto;
     white-space: pre-wrap;
 }
+
+/* Стили для CodeMirror */
+.CodeMirror {
+    height: auto;
+    min-height: 200px;
+    border: 1px solid #404040;
+    border-radius: 6px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    background-color: #252525 !important;
+}
+
+.CodeMirror-matchingbracket {
+    color: #ffd700 !important;
+    background: rgba(255, 215, 0, 0.2);
+    border-bottom: 1px solid #ffd700;
+}
+
+.CodeMirror-scroll {
+    min-height: 200px;
+}
+
+.CodeMirror-gutters {
+    background-color: #1e1e1e !important;
+    border-right: 1px solid #404040 !important;
+}
+
+.CodeMirror-linenumber {
+    color: #858585 !important;
+}
