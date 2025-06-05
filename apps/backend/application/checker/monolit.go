@@ -262,7 +262,7 @@ func (c *Checker) runTests() (string, error) {
 
 		// Проверяем выполнение кода ученика на ошибки
 		if code.err != nil {
-			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refSol.out, code.err)
+			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nПолучено:\n%v", testCase, code.err)
 			return message, nil
 		}
 

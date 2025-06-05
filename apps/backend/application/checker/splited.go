@@ -98,7 +98,8 @@ func (c *Checker) runTestCases(tc *testCases) (string, error) {
 		// Запускаем код ученика
 		err := c.runCode(absCodePath, inputFile, outputFile)
 		if err != nil {
-			return "", err
+			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nПолучено:\n%v", testCase.Input, err)
+			return message, nil
 		}
 
 		// Сохраняем данные из буфера в файл и смещаем позицию чтения на 0,
