@@ -58,7 +58,14 @@ func (c *Checker) createSolution() error {
 // Запускает эталонное решение с конкретными входными данными (тест-кейсом)
 func (c *Checker) runRefSolution(absPath, input string) (string, error) {
 	// Создаем команду и перенаправляем ввод и вывод
-	cmd := exec.Command("python", absPath)
+	var cmd *exec.Cmd
+	switch c.OS {
+	case "darwin":
+		cmd = exec.Command("python3", absPath)
+	default:
+		cmd = exec.Command("python", absPath)
+	}
+
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdin = strings.NewReader(input)
@@ -104,6 +111,8 @@ func (c *Checker) runTests() (string, error) {
 	case "windows":
 		execPath = fmt.Sprintf("./%v/code.exe", c.tempDirPath)
 	case "linux":
+		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
+	case "darwin":
 		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
 	default:
 		err := fmt.Errorf("please use the appropriate OS: Windows/Linux")

@@ -72,6 +72,10 @@ func (c *Checker) runTestCases(tc *testCases) (string, error) {
 		execPath = fmt.Sprintf("./%v/code.exe", c.tempDirPath)
 	case "Linux":
 		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
+	case "darwin":
+		execPath = fmt.Sprintf("./%v/code", c.tempDirPath)
+	default:
+		log.Printf("This system is not suitable, please use a compatible OS.")
 	}
 	absCodePath, _ := filepath.Abs(execPath)
 
