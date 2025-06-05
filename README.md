@@ -158,7 +158,7 @@ docker-compose up --build
 ```
 
 ## Дизайн системы
-В коде подробна расписана каждая функция
+В коде подробна расписана каждая функция backend-а.
 Чтобы посмотреть структурированную документацию:
 1. Установите godoc:
 ```bash
@@ -168,7 +168,7 @@ go install golang.org/x/tools/cmd/godoc@latest
 ```bash
 godoc -http=:6060
 ```
-3. Перейдите на сайт http://localhost:6060/pkg/github.com/vedsatt/laboratory-works-checker
+3. Перейдите на этот сайт: http://localhost:6060/pkg/github.com/vedsatt/laboratory-works-checker
 ## Контакты
 Если у вас возникли вопросы или предложения, можете написать их в issue или написать мне лично в тг  
 [![Telegram](https://raw.githubusercontent.com/CLorant/readme-social-icons/refs/heads/main/small/filled/telegram.svg)](https://t.me/sigmatemik52) [**Telegram**: @sigmatemik52](https://t.me/sigmatemik52)

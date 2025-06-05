@@ -236,6 +236,7 @@ func (c *Checker) runTests() (string, error) {
 			}
 
 			codeOut, err := io.ReadAll(outputFile)
+
 			if err != nil {
 				e := fmt.Errorf("error with reading from output file: %v", err)
 				log.Println(e)
@@ -267,8 +268,8 @@ func (c *Checker) runTests() (string, error) {
 		}
 
 		// Сравниваем вывод программ
-		if isCorrect := c.validate(code.out, refSol.out); !isCorrect {
-			out := c.redact(code.out)
+		out := c.redact(code.out)
+		if isCorrect := c.validate(out, refSol.out); !isCorrect {
 			message := fmt.Sprintf("Неверный ответ.\nТест-кейс:\n%v\nОжидалось:\n%v\nПолучено:\n%v", testCase, refSol.out, out)
 			return message, nil
 		}

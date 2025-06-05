@@ -26,7 +26,7 @@ func handleProcessError(err error, ctx context.Context, stderr *bytes.Buffer) er
 	return nil
 }
 
-// Запускает код ученика с конкретным тест-кейсом и отслеживает раннее завершение.
+// Запускает код ученика с конкретным тест-кейсом
 func (c *Checker) runCode(absPath string, inputFile, outputFile *os.File) error {
 	// Контекст с таймаутом для контроля времени выполнения
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -116,8 +116,11 @@ func isNoise(str string) bool {
 // Сравнивает вывод эталонного решения и вывод программы ученика
 func (c *Checker) validate(programOutput, correctAns string) bool {
 	// Разбивает вывод на массив строк
-	progLines := strings.FieldsFunc(programOutput, func(r rune) bool { return r == '\n' })
-	correctOutLines := strings.Split(correctAns, "\n")
+	progLines := strings.Split(programOutput, "\n")
+	correctOutLines := strings.Split(c.redact(correctAns), "\n")
+	if len(correctOutLines) != len(progLines) {
+		return false
+	}
 
 	i, j := 0, 0
 	for i < len(progLines) {
@@ -126,20 +129,26 @@ func (c *Checker) validate(programOutput, correctAns string) bool {
 		correctLine := strings.TrimSpace(correctOutLines[j])
 		// Если в строке есть префикс #> - это шум и он ни на что не влияет
 		// Также пропускаются любые пустые строки
-		if isNoise(currLine) {
-			i++
-			continue
-		}
 
 		// Сравниваем вывод программы с выводом эталонного решения
 		if currLine != correctLine && !isReport(currLine, correctLine) {
 			return false
 		}
-		i++
-		j++
+
+		// Проверяем, что счетчик не вышел за границы
 		if j >= len(correctOutLines) {
 			return false
 		}
+		i++
+		j++
+	}
+
+	// Проверим, что в выводе эталонного решения не осталось строк
+	for j < len(correctOutLines) {
+		if strings.TrimSpace(correctOutLines[j]) != "" {
+			return false
+		}
+		j++
 	}
 
 	return true
@@ -148,6 +157,7 @@ func (c *Checker) validate(programOutput, correctAns string) bool {
 // Форматирует некорректный вывод ученика таким образом, чтобы убрать шум и пустые строки
 // Это нужно, чтобы ученики не подумали, что решение не прошло из-за шума
 func (c *Checker) redact(code string) string {
+	code = strings.ReplaceAll(code, "\r\n", "\n")
 	codeLines := strings.Split(code, "\n")
 
 	i := 0
