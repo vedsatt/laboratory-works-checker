@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 
 	"github.com/vedsatt/laboratory-works-checker/apps/backend/application/models"
 )
@@ -119,16 +118,8 @@ func (c *Checker) createAndCompile() (string, error) {
 	}
 	defer codeFile.Close()
 
-	// Парсим строку из json в нормальный код
-	code, err := strconv.Unquote(`"` + c.lab.Code + `"`)
-	if err != nil {
-		e := fmt.Errorf("error with unquoting code: %v", err)
-		log.Println(e)
-		return "", e
-	}
-
 	// Записываем код в файл
-	_, err = codeFile.WriteString(code)
+	_, err = codeFile.WriteString(c.lab.Code)
 	if err != nil {
 		e := fmt.Errorf("error writing code to file: %v", err)
 		log.Println(e)

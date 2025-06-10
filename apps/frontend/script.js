@@ -85,7 +85,7 @@ function formatServerResponse(response) {
 
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
-    const labNumber = urlParams.get('lab') || '1';
+    const labNumber = parseInt(new URLSearchParams(window.location.search).get('lab'));
     const codeEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
         mode: 'text/x-c++src', // Важно: меняем режим с Python на C++
         theme: 'dracula',
@@ -244,7 +244,7 @@ function saveToHistory(solution) {
 }
 
 async function submitSolution() {
-    const labNumber = new URLSearchParams(window.location.search).get('lab') || '1';
+    const labNumber = parseInt(new URLSearchParams(window.location.search).get('lab'));
     const variantInput = document.getElementById('variant').value;
     const variant = parseInt(variantInput) || 0;
     const code = window.codeEditor.getValue();
@@ -264,11 +264,11 @@ async function submitSolution() {
         // Собираем данные для отправки
         const requestData = {
             id: Date.now(),
-            lab_number: parseInt(labNumber),
-            code: escapeCodeString(code),
+            lab_number: labNumber,
+            code: code.replace(/\\/g, '\\\\'), // Экранируем только обратные слеши
             tasks: {},
             task: 0
-        };
+          };
 
         // Получаем информацию о вариантах для каждой части
         const filePath = `../../labs/lab${labNumber}/description.md`;
@@ -302,10 +302,10 @@ async function submitSolution() {
         const serverResponse = await fetch(serverUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(requestData)
-        });
+          });
 
         if (!serverResponse.ok) {
             const errorData = await serverResponse.json();
