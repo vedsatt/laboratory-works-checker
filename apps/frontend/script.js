@@ -223,8 +223,14 @@ function log(message, data = null) {
 function escapeCodeString(code) {
     log('Начало преобразования кода в строку');
     try {
-        // Экранируем все специальные символы для JSON
-        return JSON.stringify(code).slice(1, -1);
+        const escaped = code
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
+        log('Код успешно преобразован в строку');
+        return escaped;
     } catch (error) {
         log('Ошибка при преобразовании кода в строку', { error: error.message });
         throw error;
@@ -242,6 +248,7 @@ async function submitSolution() {
     const variantInput = document.getElementById('variant').value;
     const variant = parseInt(variantInput) || 0;
     const code = window.codeEditor.getValue();
+    const codeEditor = document.getElementById('code');
     
     if (!code.trim()) {
         alert('Пожалуйста, введите код для отправки');
@@ -258,7 +265,7 @@ async function submitSolution() {
         const requestData = {
             id: Date.now(),
             lab_number: parseInt(labNumber),
-            code: code, // Не экранируем здесь - это сделает JSON.stringify
+            code: escapeCodeString(code),
             tasks: {},
             task: 0
         };
@@ -290,13 +297,14 @@ async function submitSolution() {
         log('Подготовка данных для отправки', requestData);
 
         // Отправляем запрос на сервер
-        const serverUrl = `http://localhost:80/api/v1/submit`; // Исправлено submit вместо submit
+        //const serverUrl = `http://${SERVER_CONFIG.host}:${SERVER_CONFIG.port}${SERVER_CONFIG.apiPath}`;
+        const serverUrl = `http://localhost:80/api/v1/submit`
         const serverResponse = await fetch(serverUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestData) // JSON.stringify правильно экранирует все спецсимволы
+            body: JSON.stringify(requestData)
         });
 
         if (!serverResponse.ok) {
@@ -307,7 +315,7 @@ async function submitSolution() {
         const result = await serverResponse.json();
         log('Ответ сервера', result);
         saveToHistory({
-            code: code,
+            code: document.getElementById('code').value,
             serverResponse: result,
             status: serverResponse.ok ? 'success' : 'error',
             timestamp: new Date().toISOString()
