@@ -11,7 +11,7 @@
 - JSON
 - Python
 - REST API
-- TLS
+- SSL/TLS
 - Docker & Docker Compose
 
 ## Структура проекта
