@@ -2,6 +2,7 @@
 package checker
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -142,10 +143,12 @@ func (c *Checker) createAndCompile() (string, error) {
 		return "", err
 	}
 
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	// Запускаем компиляцию и удаляем временный файл с кодом
 	if err := cmd.Run(); err != nil {
 		log.Println(fmt.Errorf("compilation failed: %w", err))
-		return fmt.Sprintf("compilation failed: %v", err.Error()), nil
+		return fmt.Sprintf("compilation failed: %v", stderr.String()), nil
 	}
 	os.Remove(codeFilePath)
 
