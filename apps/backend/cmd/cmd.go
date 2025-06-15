@@ -18,6 +18,6 @@ func main() {
 	// cert.pem - сертификат TLS
 	// key.pem - ключ
 	// этих файлов нет и они служат заглушкой при тестировании
-	server := server.New(cfg.Port, cfg.HttpsPort, "cert.pem", "key.pem")
+	server := server.New(cfg.Port)
 	server.Start()
 }
