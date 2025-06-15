@@ -7,25 +7,34 @@ import (
 )
 
 var (
-	defPort string = "80"
+	defPort      string = "80"
+	defHttpsPort string = "8443"
 )
 
 // Конфиг сервера
 type Config struct {
-	Port string
+	Port      string
+	HttpsPort string
 }
 
 // Возвращает порт сервера из переменных сред
 func GetConfig() *Config {
 	// Устанавливаем значения по умолчанию сразу
 	c := &Config{
-		Port: defPort,
+		Port:      defPort,
+		HttpsPort: defHttpsPort,
 	}
 
 	if port, ok := os.LookupEnv("PORT"); !ok {
 		log.Printf("Port is unset. Using default value: %v", defPort)
 	} else {
 		c.Port = port
+	}
+
+	if httpsPort, ok := os.LookupEnv("HTTPS_PORT"); !ok {
+		log.Printf("HTTPS port is unset. Using default value: %v", defHttpsPort)
+	} else {
+		c.HttpsPort = httpsPort
 	}
 
 	return c
