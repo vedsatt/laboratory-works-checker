@@ -46,6 +46,9 @@
 ├── labs
 │   ├── lab1
 │   ...
+├── nginx.conf
+├── Dockerfile
+├── docker-compose.yml
 └── go.mod
 ```
 
