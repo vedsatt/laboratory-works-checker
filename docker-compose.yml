@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: lab-checker  # ← Вот это поле
+    build: .
+    ports:
+      - "80:80"     # HOST_PORT:CONTAINER_PORT (HTTP)
+      - "8443:8443" # HOST_HTTPS_PORT:CONTAINER_HTTPS_PORT (HTTPS)
+      - "8080:8080"
+    environment:
+      - PORT=8080                 # Порт, на котором работает бэкенд внутри контейнера
+      - HTTPS_PORT=8443           # HTTPS порт внутри контейнера
+      - HOST_URL=http://localhost # Базовый URL вашего приложения
+    volumes:
+      - ./labs:/labs    # Монтируем папку с лабораторными работами
+    restart: unless-stopped

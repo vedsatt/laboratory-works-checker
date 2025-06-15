@@ -15,8 +15,6 @@ func main() {
 	cfg := config.GetConfig()
 
 	// создает объект сервера и настраивает его
-	// cert.pem - сертификат TLS
-	// key.pem - ключ
 	// этих файлов нет и они служат заглушкой при тестировании
 	server := server.New(cfg.Port)
 	server.Start()

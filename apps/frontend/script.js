@@ -122,18 +122,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadLabDescription(labNumber) {
     try {
-        const response = await fetch(`../../labs/lab${labNumber}/description.md`); //`laboratory-works-checker/labs/lab${labNumber}/description.md`
+        // Используем относительный путь от корня фронтенда
+        const response = await fetch(`/labs/lab${labNumber}/description.md`);
         if (!response.ok) throw new Error('Описание не найдено');
         
         const mdContent = await response.text();
         const contentBeforeAssignment = mdContent.split('## Задание')[0]; 
-        const htmlContent = md.render(contentBeforeAssignment); // Рендерим только нужную часть
+        const htmlContent = md.render(contentBeforeAssignment);
 
         document.getElementById('lab-description').innerHTML = htmlContent;
     } catch (error) {
         document.getElementById('lab-description').innerHTML = `
             <p>Не удалось загрузить описание работы: ${error.message}</p>
         `;
+        console.error('Ошибка загрузки описания:', error);
     }
 }
 
@@ -143,7 +145,7 @@ async function loadTasks(labNumber) {
     const tasksContainer = document.getElementById('tasks-container');
 
     try {
-        const filePath = `../../labs/lab${labNumber}/description.md`;
+        const filePath = `/labs/lab${labNumber}/description.md`;
         const response = await fetch(filePath);
         if (!response.ok) {
             throw new Error('Файл с описанием не найден');
