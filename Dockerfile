@@ -7,19 +7,31 @@ COPY apps/frontend/ .
 FROM golang:1.24-alpine AS backend-builder
 WORKDIR /app
 COPY . .
-RUN cd apps/backend && \
+RUN apk add --no-cache build-base && \
+    cd apps/backend && \
     CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /go/bin/backend ./cmd
 
 # Финальный образ
 FROM alpine:3.19
 WORKDIR /app
 
-# Устанавливаем только необходимые зависимости
+# Устанавливаем ВСЕ необходимые компоненты (включая gcc и g++)
 RUN apk add --no-cache \
     nginx \
     tzdata \
-    build-base \ 
-    bash
+    bash \
+    curl \
+    python3 \
+    py3-pip \
+    build-base \         
+    gcc \              
+    g++ && \              
+    rm -f /usr/bin/python && \
+    ln -s /usr/bin/python3 /usr/bin/python
+
+# Настраиваем Nginx
+RUN mkdir -p /run/nginx && \
+    mkdir -p /etc/nginx/conf.d
 
 # Копируем файлы
 COPY --from=frontend-builder /app /usr/share/nginx/html
@@ -29,9 +41,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Создаем симлинки для совместимости
 RUN ln -s /labs /app/labs && \
     ln -s /labs /usr/share/nginx/html/labs
-
-# Проверяем установку компиляторов
-RUN gcc --version && g++ --version
 
 EXPOSE 80 8080
 

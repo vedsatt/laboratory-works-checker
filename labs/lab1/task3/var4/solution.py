@@ -29,8 +29,17 @@ def calculate_average(r):
     average = sum(selected_elements) / len(selected_elements) if selected_elements else None
     return average
 
+def format_number(num):
+    # Преобразуем число в строку с 5 знаками после запятой
+    s = "{0:.5f}".format(num)
+    # Убираем лишние нули и точку, если они есть
+    if '.' in s:
+        s = s.rstrip('0').rstrip('.')
+    return s
+
 average = calculate_average(R)
 if average is None:
     print("Notice: нет ср. арифм. числа")
 else:
-    print("{0:.5f}".format(average))
+    print(format_number(average))
+    

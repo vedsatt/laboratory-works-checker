@@ -157,6 +157,7 @@ func (c *Checker) validate(programOutput, correctAns string) bool {
 // Форматирует некорректный вывод ученика таким образом, чтобы убрать шум и пустые строки
 // Это нужно, чтобы ученики не подумали, что решение не прошло из-за шума
 func (c *Checker) redact(code string) string {
+	code = strings.ReplaceAll(code, "\\n", "\n")
 	code = strings.ReplaceAll(code, "\r\n", "\n")
 	codeLines := strings.Split(code, "\n")
 

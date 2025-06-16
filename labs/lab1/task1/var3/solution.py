@@ -13,10 +13,12 @@ while True:
 while True:
     try:
         input_values = input().split()
+        # Заменяем запятые на точки в каждом элементе списка
+        input_values = [s.replace(',', '.') for s in input_values]
         x, h, a = map(float, input_values)
         break
     except ValueError:
-        print("Error: введите числа")
+        print("Error: введите числа в формате 8.5 или 8,5")
 
 R = []
 for i in range(1, n + 1):

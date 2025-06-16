@@ -25,10 +25,23 @@ while True:
 while True:
     try:
         input_values = input().split()
+        # Заменяем запятые на точки в каждом элементе списка
+        input_values = [s.replace(',', '.') for s in input_values]
         x, h, a = map(float, input_values)
         break
     except ValueError:
-        print("Error: введите числа")
+        print("Error: введите числа в формате 8.5 или 8,5")
 
 R = calculate_r(n, a, x, h)
-print(" ".join("{0:.5f}".format(num) for num in R))
+
+# Форматируем числа и убираем лишние нули
+formatted = []
+for num in R:
+    s = f"{num:.5f}"  # Форматируем с 5 знаками после запятой
+    if '.' in s:
+        s = s.rstrip('.')  # Убираем незначащие нули
+    formatted.append(s)
+
+# Выводим результат без лишних пробелов
+print(" ".join(formatted))
+
