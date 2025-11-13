@@ -40,8 +40,8 @@ def remove_elements(r):
 R_filtered, flag = remove_elements(R.copy())
 if len(R) == 0:
     print("Notice: пустой массив")
-    exit()
 elif not flag:
-    print(" ".join("{0:.5f}".format(num) for num in R_filtered))
-
-
+    # Используем тот же формат, что и в C (printf "%f")
+    formatted = " ".join(["%f" % num for num in R_filtered])
+    # Убираем лишние пробелы и выводим
+    print(" ".join(formatted.split()))

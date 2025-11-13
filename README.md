@@ -11,7 +11,7 @@
 - JSON
 - Python
 - REST API
-- TLS
+- TLS/SSL
 - Docker & Docker Compose
 
 ## Структура проекта
@@ -196,6 +196,21 @@ lab1
     ]
 }
 ```
+
+## Взаимодействие
+
+**Страница с выбором лабораторных работ**
+
+![labs](./images/labs_list.png)
+
+**Страница лабораторной работы и выбор варианта**
+
+![lab1](./images/lab1.png)
+
+**Отправка кода и просмотр результатов**
+
+![lab1_check](./images/lab1_check.png)
+
 ## Контакты
 Если у вас возникли вопросы или предложения, можете написать их в issue или написать мне лично в тг  
 [![Telegram](https://raw.githubusercontent.com/CLorant/readme-social-icons/refs/heads/main/small/filled/telegram.svg)](https://t.me/sigmatemik52) [**Telegram**: @sigmatemik52](https://t.me/sigmatemik52)
