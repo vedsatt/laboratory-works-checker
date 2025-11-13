@@ -5,3 +5,4 @@ server.crt
 server.key
 cert.pem
 key.pem
+.DS_Store
