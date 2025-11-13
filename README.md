@@ -213,4 +213,4 @@ lab1
 
 ## Контакты
 Если у вас возникли вопросы или предложения, можете написать их в issue или написать мне лично в тг  
-[![Telegram](https://raw.githubusercontent.com/CLorant/readme-social-icons/refs/heads/main/small/filled/telegram.svg)](https://t.me/sigmatemik52) [**Telegram**: @sigmatemik52](https://t.me/sigmatemik52)
+[![Telegram](https://raw.githubusercontent.com/CLorant/readme-social-icons/refs/heads/main/small/filled/telegram.svg)](https://t.me/sigmatemik52) [**Telegram**: @vedsatt](https://t.me/vedsatt)
